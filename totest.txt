@@ -1,0 +1,6 @@
+Provisioner:
+- user can't double-buy or rent a book
+- transfer of book ownership works
+
+Book:
+- fractional shares with royalties behave as expected
