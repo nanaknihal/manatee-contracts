@@ -60,16 +60,16 @@ describe('Book Updates', function () {
     // set of tests to be run with different owners and addresses:
     const updatingTests = async (owner, addr1, addr2) => {
       console.log('changing price')
-      setPriceTx = await book.connect(owner).setPrice(16000040);
-      await setPriceTx.wait();
+
+      await book.connect(owner).setPrice(16000040);
       expect(await book.price()).to.equal(16000040);
 
       await expect(book.connect(addr2).setPrice(17000001)).to.be.revertedWith("VM Exception while processing transaction: reverted with reason string 'Ownable: caller is not the owner'")
       expect(await book.price()).to.equal(16000040);
 
       console.log('changing price denomination')
-      setPriceDenominationTx = await book.connect(owner).setPriceDenomination('0xdAC17F958D2ee523a2206206994597C13D831ec7');
-      await setPriceDenominationTx.wait();
+
+      await book.connect(owner).setPriceDenomination('0xdAC17F958D2ee523a2206206994597C13D831ec7');
       expect(await book.priceDenomination()).to.equal('0xdAC17F958D2ee523a2206206994597C13D831ec7');
 
       await expect(book.connect(addr2).setPriceDenomination('0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48')).to.be.revertedWith("VM Exception while processing transaction: reverted with reason string 'Ownable: caller is not the owner'")
@@ -84,20 +84,16 @@ describe('Book Updates', function () {
       // expect(await book.bookHash()).to.equal('asdfasdfasdfasfdasdfasd');
 
       console.log('changing book')
-      setBookVersionTx = await book.connect(owner).setBookVersion('asdfasdfasdfasfdasdfasd', 'http://www.google.com');
-      await setBookVersionTx.wait();
+      await book.connect(owner).setBookVersion('asdfasdfasdfasfdasdfasd', 'http://www.google.com');
       expect(await book.bookVersions('asdfasdfasdfasfdasdfasd')).to.equal('http://www.google.com');
 
-      setBookVersionTx = await book.connect(owner).setBookVersion('good hash very randum', 'weird_custom_url_format :)');
-      await setBookVersionTx.wait();
+      await book.connect(owner).setBookVersion('good hash very randum', 'weird_custom_url_format :)');
       expect(await book.bookVersions('good hash very randum')).to.equal('weird_custom_url_format :)');
 
-      setBookVersionTx = await book.connect(owner).setBookVersion('asdfasdfasdfasfdasdfasd', 'http://www.yahoo.com');
-      await setBookVersionTx.wait();
+      await book.connect(owner).setBookVersion('asdfasdfasdfasfdasdfasd', 'http://www.yahoo.com');
       expect(await book.bookVersions('asdfasdfasdfasfdasdfasd')).to.equal('http://www.yahoo.com');
 
-      setBookVersionTx = await book.connect(owner).removeBookVersion('asdfasdfasdfasfdasdfasd');
-      await setBookVersionTx.wait();
+      await book.connect(owner).removeBookVersion('asdfasdfasdfasfdasdfasd');
       expect(await book.bookVersions('asdfasdfasdfasfdasdfasd')).to.equal('');
 
       await expect(book.connect(addr2).setBookVersion('asdfasdfasdfasfdasdfasd', 'xzzxczxczxczxvc')).to.be.revertedWith("VM Exception while processing transaction: reverted with reason string 'Ownable: caller is not the owner'")
@@ -106,16 +102,14 @@ describe('Book Updates', function () {
       expect(await book.bookVersions('good hash very randum')).to.equal('weird_custom_url_format :)');
 
       console.log('adding and removing rental periods')
-      addRentalPeriodTx = await book.connect(owner).addRentalPeriod(30, 15000000);
-      await addRentalPeriodTx.wait();
+      await book.connect(owner).addRentalPeriod(30, 15000000);
       expect(await book.rentalPeriods(30)).to.equal(15000000);
 
-      addRentalPeriodTx = await book.connect(owner).addRentalPeriod(365, 42069000);
-      await addRentalPeriodTx.wait();
+      await book.connect(owner).addRentalPeriod(365, 42069000);
       expect(await book.rentalPeriods(30)).to.equal(15000000);
 
-      removeRentalPeriodTx = await book.connect(owner).removeRentalPeriod(30);
-      await removeRentalPeriodTx.wait();
+
+      await book.connect(owner).removeRentalPeriod(30);
       expect(await book.rentalPeriods(30)).to.equal(0);
 
       await expect(book.connect(addr2).addRentalPeriod(30, 15000000)).to.be.revertedWith("VM Exception while processing transaction: reverted with reason string 'Ownable: caller is not the owner'")
@@ -320,7 +314,7 @@ describe('Provisioner', function (){
       expect(rental.expiration).to.equal(rental.start.add(30*day));
 
       // try with a different time period:
-      await book.connect(owner).addRentalPeriod(15,bookPrice.div(2)); //bookPrice is parametized and should be set to 0 sometimes too to make sure it works with price of 0 
+      await book.connect(owner).addRentalPeriod(15,bookPrice.div(2)); //bookPrice is parametized and should be set to 0 sometimes too to make sure it works with price of 0
       await await provisioner.connect(addr5).rent(15);
       rental = await provisioner.renters(addr5.address);
       expect(rental.expiration).to.equal(rental.start.add(45*day));
