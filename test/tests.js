@@ -117,6 +117,19 @@ describe('Book Updates', function () {
 
       expect(await book.rentalPeriods(30)).to.equal(0);
       expect(await book.rentalPeriods(365)).to.equal(42069000);
+
+      console.log('enabling and disabling resale');
+      await expect(book.connect(addr2).enableResale()).to.be.revertedWith("VM Exception while processing transaction: reverted with reason string 'Ownable: caller is not the owner'");
+      await expect(book.connect(addr2).disableResale()).to.be.revertedWith("VM Exception while processing transaction: reverted with reason string 'Ownable: caller is not the owner'");
+      // ensure enabling and disabling resale works from any possible state:
+      await book.connect(owner).enableResale();
+      expect(await book.resaleEnabled()).to.equal(true);
+      await book.connect(owner).disableResale();
+      expect(await book.resaleEnabled()).to.equal(false);
+      await book.connect(owner).enableResale();
+      expect(await book.resaleEnabled()).to.equal(true);
+
+
   }
 
 
@@ -202,7 +215,7 @@ describe('Provisioner', function (){
   it('Ensures that Provisioner: charges the exact amount, can accept the same or different tokens for marketplace fee vs. book price, grants access if and only if enough is paid, returns all pending payments atomically if payment fails, can gift books, rents for the appropriate time period, and does not allow gifting to people who already own it', async function () {
     const testProvisionerWithPrice = async (bookPrice) =>
     {
-      const [owner, addr1, addr2, addr3, addr4, addr5, addrMarketplace] = await ethers.getSigners();
+      const [owner, addr1, addr2, addr3, addr4, addr5, addr6, addrMarketplace] = await ethers.getSigners();
 
       const genericToken = await generateGenericToken();
       const genericToken2 = await generateGenericToken();
@@ -237,9 +250,11 @@ describe('Provisioner', function (){
       await expect(provisioner.connect(addr2)['buy(address,uint256,address)'](addrMarketplace.address, marketplaceFee, await book.priceDenomination())).to.be.revertedWith("VM Exception while processing transaction: reverted with reason string 'recipient already owns a copy'");
 
       // ensure it fails if any smaller price is paid
-      await genericToken.connect(owner).approve(provisioner.address, price.add(marketplaceFee).sub(1));
-      await expect(provisioner.connect(owner)['buy(address,uint256,address)'](addrMarketplace.address, marketplaceFee, await book.priceDenomination())).to.be.revertedWith("VM Exception while processing transaction: reverted with reason string 'ERC20: transfer amount exceeds allowance'");
-
+      if (price > 0) { //can't work for 0 test case because then price would be negative:
+        console.log(price, marketplaceFee, price.add(marketplaceFee).sub(1))
+        await genericToken.connect(owner).approve(provisioner.address, price.add(marketplaceFee).sub(1));
+        await expect(provisioner.connect(owner)['buy(address,uint256,address)'](addrMarketplace.address, marketplaceFee, await book.priceDenomination())).to.be.revertedWith("VM Exception while processing transaction: reverted with reason string 'ERC20: transfer amount exceeds allowance'");
+      }
       // ensure the amount charged is exactly what it should be
       await genericToken.connect(owner).approve(provisioner.address, price.add(marketplaceFee).add(1));
       await provisioner.connect(owner)['buy(address,uint256,address)'](addrMarketplace.address, marketplaceFee, await book.priceDenomination());
@@ -266,13 +281,18 @@ describe('Provisioner', function (){
       expect(await genericToken.allowance(addr4.address, provisioner.address)).to.equal(1);
       expect(await genericToken2.allowance(addr4.address, provisioner.address)).to.equal(1);
       // and fails if too little is allowed in the book's denomination
-      await genericToken.connect(addr5).approve(provisioner.address, price.sub(1));
-      await genericToken2.connect(addr5).approve(provisioner.address, marketplaceFee);
-      await expect(provisioner.connect(addr5)['buy(address,uint256,address)'](addrMarketplace.address, marketplaceFee, genericToken2.address)).to.be.revertedWith("VM Exception while processing transaction: reverted with reason string 'ERC20: transfer amount exceeds allowance'");
-      // or in the exhange denomination
-      await genericToken.connect(addr5).approve(provisioner.address, price);
-      await genericToken2.connect(addr5).approve(provisioner.address, marketplaceFee - 1);
-      await expect(provisioner.connect(addr5)['buy(address,uint256,address)'](addrMarketplace.address, marketplaceFee, genericToken2.address)).to.be.revertedWith("VM Exception while processing transaction: reverted with reason string 'ERC20: transfer amount exceeds allowance'");
+      if (price > 0) {//can't work for 0 test case because then price would be negative:
+        await genericToken.connect(addr5).approve(provisioner.address, price.sub(1));
+        await genericToken2.connect(addr5).approve(provisioner.address, marketplaceFee);
+        await expect(provisioner.connect(addr5)['buy(address,uint256,address)'](addrMarketplace.address, marketplaceFee, genericToken2.address)).to.be.revertedWith("VM Exception while processing transaction: reverted with reason string 'ERC20: transfer amount exceeds allowance'");
+        // or in the exhange denomination
+        await genericToken.connect(addr5).approve(provisioner.address, price);
+        await genericToken2.connect(addr5).approve(provisioner.address, marketplaceFee - 1);
+        await expect(provisioner.connect(addr5)['buy(address,uint256,address)'](addrMarketplace.address, marketplaceFee, genericToken2.address)).to.be.revertedWith("VM Exception while processing transaction: reverted with reason string 'ERC20: transfer amount exceeds allowance'");
+      }
+      // transfering books works as expected
+      await expect(provisioner.connect(owner).transferPurchase(addr6.address)).to.be.revertedWith("VM Exception while processing transaction: reverted with reason string 'owner of book contract has not enabled resale'");
+      // await expect(prov)
 
       // ensure you can't rent a book if you own it
       await book.connect(owner).addRentalPeriod(30, 15000000);
@@ -314,16 +334,20 @@ describe('Provisioner', function (){
       expect(rental.expiration).to.equal(rental.start.add(30*day));
 
       // try with a different time period:
-      await book.connect(owner).addRentalPeriod(15,bookPrice.div(2)); //bookPrice is parametized and should be set to 0 sometimes too to make sure it works with price of 0
-      await await provisioner.connect(addr5).rent(15);
-      rental = await provisioner.renters(addr5.address);
-      expect(rental.expiration).to.equal(rental.start.add(45*day));
+      if (bookPrice == 0){
+        await expect(book.connect(owner).addRentalPeriod(15, bookPrice)).to.be.revertedWith("VM Exception while processing transaction: reverted with reason string 'cannot have rentals priced at 0'");
+      } else{
+        await book.connect(owner).addRentalPeriod(15, bookPrice); //bookPrice is parametized and should be set to 0 sometimes too to make sure it works with price of 0
+        await provisioner.connect(addr5).rent(15);
+        rental = await provisioner.renters(addr5.address);
+        expect(rental.expiration).to.equal(rental.start.add(45*day));
+      }
 
-      // test in edge case of 0 or overflow days
+      // test in edge case of 0 days
       await expect(book.connect(owner).addRentalPeriod(0, 40000)).to.be.revertedWith("VM Exception while processing transaction: reverted with reason string 'cannot have rentals for 0 days'");
     }
     for (const price of [15000000, 0, 1, 10]){
-      testProvisionerWithPrice(price)
+      await testProvisionerWithPrice(price);
     }
 
   })

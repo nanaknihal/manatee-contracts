@@ -40,6 +40,7 @@ contract Book is ERC20, Ownable, PaymentSplitterOverrideShares { //PaymentSplitt
 
     function addRentalPeriod(uint256 numDays, uint256 price_) public onlyOwner {
       require(numDays > 0, "cannot have rentals for 0 days");
+      require(price_ > 0, "cannot have rentals priced at 0");
       rentalPeriods[numDays] = price_;
     }
 
@@ -61,7 +62,7 @@ contract Book is ERC20, Ownable, PaymentSplitterOverrideShares { //PaymentSplitt
     }
 
     function disableResale() public onlyOwner {
-      resaleEnabled = true;
+      resaleEnabled = false;
     }
 
     // deprecated
