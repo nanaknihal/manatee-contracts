@@ -1,6 +1,5 @@
 Provisioner:
-- transfer of book ownership works
+- transfer of book rentals works
 - returns all pending payments atomically if payment fails
 Book:
 - fractional shares with royalties behave as expected
-- enableResale and disableResale work and can only be done by owner

@@ -292,7 +292,16 @@ describe('Provisioner', function (){
       }
       // transfering books works as expected
       await expect(provisioner.connect(owner).transferPurchase(addr6.address)).to.be.revertedWith("VM Exception while processing transaction: reverted with reason string 'owner of book contract has not enabled resale'");
-      // await expect(prov)
+      await book.connect(owner).enableResale();
+      await provisioner.connect(addr2).transferPurchase(addr6.address);
+      expect(await provisioner.owners(addr2.address)).to.equal(false);
+      expect(await provisioner.owners(addr6.address)).to.equal(true);
+      await expect(provisioner.connect(addr1).transferPurchase(addr6.address)).to.be.revertedWith("VM Exception while processing transaction: reverted with reason string 'cannot transfer to a recipient who already owns the book'");
+      await expect(provisioner.connect(addr2).transferPurchase(addr6.address)).to.be.revertedWith("VM Exception while processing transaction: reverted with reason string 'you must own the book before transferring your ownership'");
+      await provisioner.connect(addr6).transferPurchase(addr2.address);
+      expect(await provisioner.owners(addr2.address)).to.equal(true);
+      expect(await provisioner.owners(addr6.address)).to.equal(false);
+
 
       // ensure you can't rent a book if you own it
       await book.connect(owner).addRentalPeriod(30, 15000000);

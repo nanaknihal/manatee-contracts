@@ -84,9 +84,8 @@ contract Provisioner {
       require(book.resaleEnabled(), "owner of book contract has not enabled resale");
       require(owners[msg.sender], "you must own the book before transferring your ownership");
       require(!(owners[to]), "cannot transfer to a recipient who already owns the book");
-      //safely transfer
-      require(owners[msg.sender] = false);
-      require(owners[to] = true);
+      owners[msg.sender] = false;
+      owners[to] = true;
     }
 
     function transferRental(address to) public {
