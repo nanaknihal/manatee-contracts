@@ -204,25 +204,82 @@ describe('Royalty shares reflect ERC20 token holders', function () {
   })
 })
 
-describe('Payments to Provisioner', function (){
-  it('asdfasdfaf', async function () {
+describe('Provisioner', function (){
+  it('Ensures that Provisioner: charges the exact amount, can accept the same or different tokens for marketplace fee vs. book price, grants access if and only if enough is paid, returns all pending payments atomically if payment fails, can gift books, rents for the appropriate time period, and does not allow gifting to people who already own it', async function () {
+    const [owner, addr1, addr2, addr3, addr4, addr5, addrMarketplace] = await ethers.getSigners();
+
+    const genericToken = await generateGenericToken();
+    const genericToken2 = await generateGenericToken();
     const manat = await generateManateeToken();
     const book = await generateBook(manat.address);
+    await book.setPriceDenomination(genericToken.address);
     const Provisioner = await ethers.getContractFactory('Provisioner');
     const provisionerAddr = await book.provisioner();
     const provisioner = await Provisioner.attach(provisionerAddr);
-    const genericToken = await generateGenericToken();
 
-    const [owner, addr1, addr2, addrMarketplace] = await ethers.getSigners();
-    // approve the transactoins, then do them
-    marketplaceTip = (await book.price()) * 0.05 //give a 5% tip to the marketplace
-    console.log((await book.price()).add(marketplaceTip))
-    book.connect(addr2).approve(provisionerAddr, (await book.price()).add(marketplaceTip));
-    // NOT WORKING DUE 2 APPROVING THE WRONG ADDRESS. APPROVE TO RIGHT ADDRESS, BUT THIS ITSELF SHOULD BE A TEST CASE; WHY IS IT NOT FAILING WITH AN ERROR MESSAGE DESPITE THE REQUIRES?
+    console.log('balance', await genericToken.balanceOf(owner.address));
+    await genericToken.transfer(addr2.address, 100000000);
+    await genericToken.transfer(addr3.address, 100000000);
+    await genericToken.transfer(addr4.address, 100000000);
+    await genericToken.transfer(addr5.address, 100000000);
+    await genericToken2.transfer(addr3.address, 100000000);
+    await genericToken2.transfer(addr4.address, 100000000);
+    await genericToken2.transfer(addr5.address, 100000000);
+    // approve the transactions, then do them
+    const price = await book.price()
+    const protocolFee = price.div(10);
+    var marketplaceFee = price.div(20); //give a 5% tip to the marketplace
+    console.log((await book.price()).add(marketplaceFee));
+    // note: if you approve a small amount after a large amount, the small amount stays. so add all approval amounts for a single token into one approve() call.
+    await genericToken.connect(addr2).approve(provisioner.address, price.add(marketplaceFee));
     expect(await provisioner.owners(addr2.address)).to.equal(false);
-    provisioner.connect(addr2)['buy(address,uint256,address)'](addrMarketplace.address, marketplaceTip, book.priceDenomination())
+    await provisioner.connect(addr2)['buy(address,uint256,address)'](addrMarketplace.address, marketplaceFee, await book.priceDenomination());
     expect(await provisioner.owners(addr2.address)).to.equal(true);
-    // gift a book to addr1
-    provisioner.connect(addr2)['buy(address,address,uint256,address)'](addr1.address, addrMarketplace.address, marketplaceTip, genericToken.address)
+
+    // ensure it fails if the user already owns a book
+    await genericToken.connect(addr2).approve(provisioner.address, price.add(marketplaceFee));
+    await expect(provisioner.connect(addr2)['buy(address,uint256,address)'](addrMarketplace.address, marketplaceFee, await book.priceDenomination())).to.be.revertedWith("VM Exception while processing transaction: reverted with reason string 'recipient already owns a copy'");
+
+    // ensure it fails if any smaller price is paid
+    await genericToken.connect(owner).approve(provisioner.address, price.add(marketplaceFee).sub(1));
+    await expect(provisioner.connect(owner)['buy(address,uint256,address)'](addrMarketplace.address, marketplaceFee, await book.priceDenomination())).to.be.revertedWith("VM Exception while processing transaction: reverted with reason string 'ERC20: transfer amount exceeds allowance'");
+
+    // ensure the amount charged is exactly what it should be
+    await genericToken.connect(owner).approve(provisioner.address, price.add(marketplaceFee).add(1));
+    await provisioner.connect(owner)['buy(address,uint256,address)'](addrMarketplace.address, marketplaceFee, await book.priceDenomination());
+    expect(await genericToken.allowance(owner.address, provisioner.address)).to.equal(1);
+
+    // ensure gifting a book to addr1 works (could be more comprehensive but this is unlikely to be a problem)
+    expect(await provisioner.owners(addr1.address)).to.equal(false);
+    await provisioner.connect(addr2)['buy(address,address,uint256,address)'](addr1.address, addrMarketplace.address, marketplaceFee, genericToken.address);
+    expect(await provisioner.owners(addr1.address)).to.equal(true);
+    // try again and make sure it fails because the recipient owns it
+    await expect(provisioner.connect(addr2)['buy(address,address,uint256,address)'](addr1.address, addrMarketplace.address, marketplaceFee, genericToken.address)).to.be.revertedWith("VM Exception while processing transaction: reverted with reason string 'recipient already owns a copy'");
+
+    // ensure paying the provisioner and exchange in different denominations works
+    marketplaceFee = 1000000
+    await genericToken.connect(addr3).approve(provisioner.address, price);
+    await genericToken2.connect(addr3).approve(provisioner.address, marketplaceFee);
+    expect(await provisioner.owners(addr3.address)).to.equal(false);
+    await provisioner.connect(addr3)['buy(address,uint256,address)'](addrMarketplace.address, marketplaceFee, genericToken2.address);
+    expect(await provisioner.owners(addr3.address)).to.equal(true);
+    // and does not overcharge
+    await genericToken.connect(addr4).approve(provisioner.address, price.add(1));
+    await genericToken2.connect(addr4).approve(provisioner.address, marketplaceFee + 1);
+    await provisioner.connect(addr4)['buy(address,uint256,address)'](addrMarketplace.address, marketplaceFee, genericToken2.address);
+    expect(await genericToken.allowance(addr4.address, provisioner.address)).to.equal(1);
+    expect(await genericToken2.allowance(addr4.address, provisioner.address)).to.equal(1);
+    // and fails if too little is allowed in the book's denomination
+    await genericToken.connect(addr5).approve(provisioner.address, price.sub(1));
+    await genericToken2.connect(addr5).approve(provisioner.address, marketplaceFee);
+    await expect(provisioner.connect(addr5)['buy(address,uint256,address)'](addrMarketplace.address, marketplaceFee, genericToken2.address)).to.be.revertedWith("VM Exception while processing transaction: reverted with reason string 'ERC20: transfer amount exceeds allowance'");
+    // or in the exhange denomination
+    await genericToken.connect(addr5).approve(provisioner.address, price);
+    await genericToken2.connect(addr5).approve(provisioner.address, marketplaceFee - 1);
+    await expect(provisioner.connect(addr5)['buy(address,uint256,address)'](addrMarketplace.address, marketplaceFee, genericToken2.address)).to.be.revertedWith("VM Exception while processing transaction: reverted with reason string 'ERC20: transfer amount exceeds allowance'");
+
+    // ensure paying
+
+
   })
 })
