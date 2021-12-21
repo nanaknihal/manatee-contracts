@@ -229,7 +229,6 @@ describe('Provisioner', function (){
     const price = await book.price()
     const protocolFee = price.div(10);
     var marketplaceFee = price.div(20); //give a 5% tip to the marketplace
-    console.log((await book.price()).add(marketplaceFee));
     // note: if you approve a small amount after a large amount, the small amount stays. so add all approval amounts for a single token into one approve() call.
     await genericToken.connect(addr2).approve(provisioner.address, price.add(marketplaceFee));
     expect(await provisioner.owners(addr2.address)).to.equal(false);
@@ -278,8 +277,51 @@ describe('Provisioner', function (){
     await genericToken2.connect(addr5).approve(provisioner.address, marketplaceFee - 1);
     await expect(provisioner.connect(addr5)['buy(address,uint256,address)'](addrMarketplace.address, marketplaceFee, genericToken2.address)).to.be.revertedWith("VM Exception while processing transaction: reverted with reason string 'ERC20: transfer amount exceeds allowance'");
 
-    // ensure paying
+    // ensure you can't rent a book if you own it
+    await book.connect(owner).addRentalPeriod(30, 15000000);
+    await expect(provisioner.connect(addr4).rent(30)).to.be.revertedWith("VM Exception while processing transaction: reverted with reason string 'you already own the book you are trying to rent'");
+
+    // ensure only the correct period can be rented for
+    await expect(provisioner.connect(addr5).rent(31)).to.be.revertedWith("VM Exception while processing transaction: reverted with reason string 'invalid rental period'");
 
 
+    // ensure rental period ends at the right time
+    await genericToken.connect(addr5).approve(provisioner.address, 1000000000);
+    await genericToken2.connect(addr5).approve(provisioner.address, 1000000000);
+
+    let day = 24*60*60;
+    await provisioner.connect(addr5).rent(30);
+    var rental = await provisioner.renters(addr5.address);
+    expect(rental.start).to.equal(rental.expiration.sub(30*day));
+
+    // ensure re-renting it extends it by the appropriate amount
+    const originalRentalStart = rental.start;
+    await provisioner.connect(addr5).rent(30);
+
+    rental = await provisioner.renters(addr5.address);
+    expect(rental.expiration).to.equal(originalRentalStart.add(60*day));
+
+    // even if time changes before renting again (as long as the time has not gone beyond the current rental period)
+    await ethers.provider.send('evm_increaseTime', [20*day]);
+    await ethers.provider.send('evm_mine');
+
+    await provisioner.connect(addr5).rent(30);
+    rental = await provisioner.renters(addr5.address);
+    expect(rental.expiration).to.equal(originalRentalStart.add(90*day));
+
+    // now, try letting the rental expire and ensuring the new rental is still the correct period
+    await ethers.provider.send('evm_increaseTime', [100*day]);
+    await ethers.provider.send('evm_mine');
+    await provisioner.connect(addr5).rent(30);
+    rental = await provisioner.renters(addr5.address);
+    expect(rental.expiration).to.equal(rental.start.add(30*day));
+
+    // try with a different time period:
+    await provisioner.connect(owner).addRentalPeriod(15,5000000);
+    await await provisioner.connect(addr5).rent(15);
+    rental = await provisioner.renters(addr5.address);
+    expect(rental.expiration).to.equal(rental.start.add(45*day));
+
+    // test in edge case of 0 or overflow days
   })
 })

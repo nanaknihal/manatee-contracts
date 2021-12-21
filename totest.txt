@@ -1,6 +1,8 @@
 Provisioner:
-- user can't double-buy or rent a book
 - transfer of book ownership works
-
+- returns all pending payments atomically if payment fails
+- rents for the appropriate time period
+- rents for 0 or overflow days
 Book:
 - fractional shares with royalties behave as expected
+- enableResale and disableResale work and can only be done by owner

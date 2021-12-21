@@ -29,36 +29,30 @@ contract Provisioner {
 
     //will charge the book's price plus token 'tip' to marketplace
     function buy(address marketplaceAddr, uint256 marketplaceTip, address marketplaceTipDenomination) public {
-      _buy(msg.sender, marketplaceAddr, marketplaceTip, marketplaceTipDenomination);
+      buy(msg.sender, marketplaceAddr, marketplaceTip, marketplaceTipDenomination);
     }
 
     //will charge the book's price plus token 'tip' to marketplace, overloaded to buy a book for someone/something else
-    function buy(address recipient, address marketplaceAddr, uint256 marketplaceTip, address marketplaceTipDenomination) public {
-      _buy(recipient, marketplaceAddr, marketplaceTip, marketplaceTipDenomination);
-    }
+    // function buy(address recipient, address marketplaceAddr, uint256 marketplaceTip, address marketplaceTipDenomination) public {
+    //   _buy(recipient, marketplaceAddr, marketplaceTip, marketplaceTipDenomination);
+    // }
 
-    function _buy(address addr, address marketplaceAddr, uint256 marketplaceTip, address marketplaceTipDenomination) private {
-      console.log('starting');
+    function buy(address recipient, address marketplaceAddr, uint256 marketplaceTip, address marketplaceTipDenomination) public {
+      require(!owners[recipient], "recipient already owns a copy");
       IERC20 priceToken = IERC20(book.priceDenomination());
       IERC20 tipToken = IERC20(marketplaceTipDenomination);
       uint256 fee = book.price() / 10; //DON'T HARDCODE?! OR HARDCODE
-      console.log('will continue for ', book.price(), book.priceDenomination());
       require(priceToken.transferFrom(msg.sender, bookAddr, book.price() - fee), 'Need to pay enough for book');
-      console.log('made it here');
       require(priceToken.transferFrom(msg.sender, manatAddr, fee), 'Need to pay enough for book'); //DON'T HARDCODE?! OR HARDCODE
-
-      console.log('will continue for ', marketplaceTip, marketplaceTipDenomination);
       require(tipToken.transferFrom(msg.sender, marketplaceAddr, marketplaceTip), 'Need to pay enough to marketplace');
-      console.log('and here');
 
-      owners[addr] = true;
-      console.log('and here also');
-      console.log('address is ', addr);
+      owners[recipient] = true;
     }
 
     function rent(uint256 numDays) public {
       uint256 price = book.rentalPeriods(numDays);
       require(price > 0, "invalid rental period");
+      require(!owners[msg.sender], "you already own the book you are trying to rent");
       IERC20 token = IERC20(book.priceDenomination());
       require(token.transferFrom(msg.sender, address(this), price));
       _rentIndiscriminantly(msg.sender, numDays);
