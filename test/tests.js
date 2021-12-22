@@ -155,7 +155,7 @@ describe('Book Updates', function () {
 })
 
 describe('Royalty shares reflect ERC20 token holders', function () {
-  it('MISSING TESTS FOR FRACTIONAL SHARES (NOT FULLY OWNING BOOK OR MANAT): Ensures PaymentSplitterOverrideShares shares accurately reflect those of ERC20 token holders', async function () {
+  it('Ensures PaymentSplitterOverrideShares shares accurately reflect those of ERC20 token holders', async function () {
     const [owner, addr1, addr2, addrGarbage] = await ethers.getSigners();
     const genericToken = await generateGenericToken();
 
@@ -199,12 +199,20 @@ describe('Royalty shares reflect ERC20 token holders', function () {
             await genericToken.transfer(contract.address, pu('25.5'));
             expect(await contract.pendingPaymentToken(addr.address, genericToken.address)).to.equal(pu('35.5'));
 
-            let curTokenBalance = await genericToken.balanceOf(addr.address)
-            tx = await contract.connect(addr)['release(address,address)'](genericToken.address, addr.address);
 
-            // tx.wait();
-            //inaccuries due to gas fees, hence closeTo with slippage of e.g. 0.05 ETH
-            expect(await genericToken.balanceOf(addr.address)).to.equal(curTokenBalance.add(pu('35.5')));
+            // console.log('fuck', await contract.pendingPaymentToken(addr.address, genericToken.address), await contract.balanceOf(addr.address));
+            await contract.connect(addr).transfer(addrGarbage.address, (await contract.balanceOf(addr.address)).div(4));
+            // console.log('fuck1', await contract.pendingPaymentToken(addr.address, genericToken.address), await contract.balanceOf(addr.address));
+            let pendingPaymentToken = (await contract.pendingPaymentToken(addr.address, genericToken.address));
+            expect(pendingPaymentToken).to.equal(pu('26.625'));
+
+            let curTokenBalance = await genericToken.balanceOf(addr.address);
+            await contract.connect(addr)['release(address,address)'](genericToken.address, addr.address);
+
+            expect(await genericToken.balanceOf(addr.address)).to.equal(curTokenBalance.add(pendingPaymentToken));
+            expect(await contract.pendingPaymentToken(addr.address, genericToken.address)).to.equal(0);
+
+            console.log(addr.address);
             await expect(contract.connect(addr)['release(address)'](addr.address)).to.be.revertedWith("VM Exception while processing transaction: reverted with reason string 'PaymentSplitter: account is not due payment'");
       }
     }

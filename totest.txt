@@ -1,5 +1,4 @@
 Provisioner:
-- transfer of book rentals works
 - returns all pending payments atomically if payment fails
 Book:
 - fractional shares with royalties behave as expected

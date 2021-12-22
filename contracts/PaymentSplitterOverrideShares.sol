@@ -4,6 +4,8 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts/utils/Context.sol";
 
+import "hardhat/console.sol";
+
 /*MODIFICATION OF PaymentSplitter so that shares is given by an overridable function instead of a private variable. This way, the shares can be retrieved from an external source, e.g. an ERC20 contract such as this:
 
 IERC20 token;
@@ -138,17 +140,22 @@ contract PaymentSplitterOverrideShares is Context {
      * contract.
      */
     function release(IERC20 token, address account) public {
+        console.log('account has shares: ', _shares(account));
         require(_shares(account) > 0, "PaymentSplitter: account has no shares");
 
         uint256 payment = pendingPaymentToken(account, token);
 
+        console.log('account is owed: ', payment);
         require(payment != 0, "PaymentSplitter: account is not due payment");
-
+        console.log('this ran');
         _erc20Released[token][account] += payment;
+        console.log('this ran');
         _erc20TotalReleased[token] += payment;
 
+        console.log('this ran');
         SafeERC20.safeTransfer(token, account, payment);
         emit ERC20PaymentReleased(token, account, payment);
+        console.log('this ran');
     }
 
 
@@ -162,7 +169,13 @@ contract PaymentSplitterOverrideShares is Context {
      */
     function pendingPaymentEth(address account) public view returns (uint256) {
         uint256 totalReceived = address(this).balance + totalReleased();
-        return (totalReceived * _shares(account)) / _totalShares() - released(account);
+        uint256 totalOwed_ = (totalReceived * _shares(account)) / _totalShares();
+        uint256 totalReleased_ = released(account);
+        if (totalReleased_ > totalOwed_) {
+          return 0;
+        } else {
+          return totalOwed_ - totalReleased_;
+        }
     }
 
     /**
@@ -173,7 +186,14 @@ contract PaymentSplitterOverrideShares is Context {
      */
     function pendingPaymentToken(address account, IERC20 token) public view returns (uint256) {
         uint256 totalReceived = token.balanceOf(address(this)) + totalReleased(token);
-        return (totalReceived * _shares(account)) / _totalShares() - released(token, account);
+        uint256 totalOwed_ = (totalReceived * _shares(account)) / _totalShares();
+        uint256 totalReleased_ = released(token, account);
+        if (totalReleased_ > totalOwed_) {
+          return 0;
+        } else {
+          return totalOwed_ - totalReleased_;
+        }
+
     }
 
 }
