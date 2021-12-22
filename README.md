@@ -1,6 +1,8 @@
 This is a hardhat environment but many of the files are gitignored and you'll have to install yourself. You can initialize a local github repo, then initialize a hardhat project using this guide https://hardhat.org/tutorial/creating-a-new-hardhat-project.html. Then run git reset --hard origin/main 
 (after setting the origin: git remote add origin https://github.com/nanaknihal/manatee-contracts.git)
 
+The docs are outdated but should be up-to-date tonight
+
 
 # Basic Sample Hardhat Project
 
