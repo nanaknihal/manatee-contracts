@@ -354,6 +354,39 @@ describe('Provisioner', function (){
 
       // test in edge case of 0 days
       await expect(book.connect(owner).addRentalPeriod(0, 40000)).to.be.revertedWith("VM Exception while processing transaction: reverted with reason string 'cannot have rentals for 0 days'");
+
+
+
+      // transfering rentals works as expected
+      await expect(provisioner.connect(addr6).transferRental(addr5.address)).to.be.revertedWith("VM Exception while processing transaction: reverted with reason string 'you must rent the book before transferring your rental'");
+
+      currentRental = await provisioner.renters(addr5.address);
+      currentTimeToExp = (currentRental.expiration - currentRental.start)
+      await provisioner.connect(addr5).transferRental(addr6.address);
+      rental = await provisioner.renters(addr6.address);
+      expect(rental.expiration - rental.start).to.be.closeTo(currentTimeToExp, 30); //allow 30 seconds of slippage
+
+      await ethers.provider.send('evm_increaseTime', [20000*day]);
+      await ethers.provider.send('evm_mine');
+      await expect(provisioner.connect(addr6).transferRental(addr5.address)).to.be.revertedWith("VM Exception while processing transaction: reverted with reason string 'you must rent the book before transferring your rental'");
+      await provisioner.connect(addr5).rent(30);
+      await ethers.provider.send('evm_increaseTime', [29*day]);
+      await ethers.provider.send('evm_mine');
+      await provisioner.connect(addr5).transferRental(addr6.address);
+      rental = await provisioner.renters(addr6.address);
+      // console.log('rentals', await provisioner.renters(addr5.address), await provisioner.renters(addr6.address));
+      expect(rental.expiration - rental.start).to.be.closeTo(day, 100); //allow 100 seconds
+
+
+      // await book.connect(owner).enableResale();
+      // await provisioner.connect(addr2).transferPurchase(addr6.address);
+      // expect(await provisioner.owners(addr2.address)).to.equal(false);
+      // expect(await provisioner.owners(addr6.address)).to.equal(true);
+      // await expect(provisioner.connect(addr1).transferPurchase(addr6.address)).to.be.revertedWith("VM Exception while processing transaction: reverted with reason string 'cannot transfer to a recipient who already owns the book'");
+      // await expect(provisioner.connect(addr2).transferPurchase(addr6.address)).to.be.revertedWith("VM Exception while processing transaction: reverted with reason string 'you must own the book before transferring your ownership'");
+      // await provisioner.connect(addr6).transferPurchase(addr2.address);
+      // expect(await provisioner.owners(addr2.address)).to.equal(true);
+      // expect(await provisioner.owners(addr6.address)).to.equal(false);
     }
     for (const price of [15000000, 0, 1, 10]){
       await testProvisionerWithPrice(price);

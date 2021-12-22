@@ -55,7 +55,7 @@ contract Provisioner {
       require(!owners[msg.sender], "you already own the book you are trying to rent");
       IERC20 token = IERC20(book.priceDenomination());
       require(token.transferFrom(msg.sender, address(this), price));
-      _rentIndiscriminantly(msg.sender, numDays);
+      _rentIndiscriminantly(msg.sender, numDays * 1 days);
     }
 
     // function rent(address addr, uint256 numDays) public {
@@ -67,14 +67,14 @@ contract Provisioner {
     // }
 
     // internal method to grants access without checking payment was successful
-    function _rentIndiscriminantly(address addr, uint256 numDays) private {
+    function _rentIndiscriminantly(address addr, uint256 duration) private {
       //if there's already a rental, extend it:
       if(renters[addr].expiration > block.timestamp) {
-        renters[addr].expiration += numDays * 1 days;
+        renters[addr].expiration += duration;
       } else {
         renters[addr] = RentalContract({
           start: block.timestamp,
-          expiration: block.timestamp + numDays * 1 days
+          expiration: block.timestamp + duration
         });
       }
 
@@ -92,9 +92,9 @@ contract Provisioner {
       require(book.resaleEnabled(), "owner of book contract has not enabled resale");
       require(renters[msg.sender].expiration > block.timestamp, "you must rent the book before transferring your rental");
 
-      //rent the boook
-      uint256 numDays = (renters[msg.sender].expiration - renters[msg.sender].start) / (1 days);
-      _rentIndiscriminantly(to, numDays);
+      //transfer the remainder of the rental
+      uint256 duration = renters[msg.sender].expiration - block.timestamp;
+      _rentIndiscriminantly(to, duration);
     }
 
 
