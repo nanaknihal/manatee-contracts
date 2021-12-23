@@ -70,12 +70,12 @@ contract Book is ERC20, Ownable, PaymentSplitterOverrideShares { //PaymentSplitt
     //   bookHash = newBookHash;
     // }
 
-    function _shares(address account) public view override returns (uint256) {
+    function getShares(address account) public view override returns (uint256) {
         return balanceOf(account);
 
       }
 
-    function _totalShares() public view override returns (uint256) {
+    function getTotalShares() public view override returns (uint256) {
         return totalSupply();
       }
 

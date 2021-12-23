@@ -6,13 +6,13 @@ import "@openzeppelin/contracts/utils/Context.sol";
 
 import "hardhat/console.sol";
 
-/*MODIFICATION OF PaymentSplitter so that shares is given by an overridable function instead of a private variable. This way, the shares can be retrieved from an external source, e.g. an ERC20 contract such as this:
+/* Modification of PaymentSplitter so that shares is given by an overridable function instead of a private variable. This way, the shares can be retrieved from an external source, e.g. an ERC20 contract such as this:
 
 IERC20 token;
-function _shares(address account) public view override returns (uint256) {
+function getShares(address account) public view override returns (uint256) {
     return token.balanceOf(account);
   }
-    function _totalShares() public view override returns (uint256) {
+    function getTotalShares() public view override returns (uint256) {
         return token.totalShares();
   }
 
@@ -37,17 +37,13 @@ function _shares(address account) public view override returns (uint256) {
  * to run tests before sending real value to this contract.
  */
 contract PaymentSplitterOverrideShares is Context {
-    // event PayeeAdded(address account, uint256 shares);
     event PaymentReleased(address to, uint256 amount);
     event ERC20PaymentReleased(IERC20 indexed token, address to, uint256 amount);
     event PaymentReceived(address from, uint256 amount);
 
-    // uint256 private _totalShares;
     uint256 private _totalReleased;
 
-    // mapping(address => uint256) private _shares;
     mapping(address => uint256) private _released;
-    // address[] private _payees;
 
     mapping(IERC20 => uint256) private _erc20TotalReleased;
     mapping(IERC20 => mapping(address => uint256)) private _erc20Released;
@@ -79,8 +75,8 @@ contract PaymentSplitterOverrideShares is Context {
     /**
      * @dev Getter for the total shares held by payees.
      */
-    function _totalShares() virtual public view returns (uint256) {
-        //return _totalShares;
+    function getTotalShares() virtual public view returns (uint256) {
+        //return getTotalShares;
     }
 
     /**
@@ -101,8 +97,8 @@ contract PaymentSplitterOverrideShares is Context {
     /**
      * @dev Getter for the amount of shares held by an account.
      */
-    function _shares(address account) virtual public view returns (uint256) {
-        // return _shares[account];
+    function getShares(address account) virtual public view returns (uint256) {
+        // return getShares[account];
     }
 
     /**
@@ -121,7 +117,7 @@ contract PaymentSplitterOverrideShares is Context {
     }
 
     function release(address payable account) public {
-        require(_shares(account) > 0, "PaymentSplitter: account has no shares");
+        require(getShares(account) > 0, "PaymentSplitter: account has no shares");
 
         uint256 payment = pendingPaymentEth(account);
 
@@ -140,36 +136,27 @@ contract PaymentSplitterOverrideShares is Context {
      * contract.
      */
     function release(IERC20 token, address account) public {
-        console.log('account has shares: ', _shares(account));
-        require(_shares(account) > 0, "PaymentSplitter: account has no shares");
-
+        require(getShares(account) > 0, "PaymentSplitter: account has no shares");
         uint256 payment = pendingPaymentToken(account, token);
-
-        console.log('account is owed: ', payment);
         require(payment != 0, "PaymentSplitter: account is not due payment");
-        console.log('this ran');
+
         _erc20Released[token][account] += payment;
-        console.log('this ran');
         _erc20TotalReleased[token] += payment;
 
-        console.log('this ran');
         SafeERC20.safeTransfer(token, account, payment);
         emit ERC20PaymentReleased(token, account, payment);
-        console.log('this ran');
     }
 
 
 
 
-
-//DELETE THESE BEFORE PULL REQUESTING; THEY AREN'T NEEDED FOR OpenZeppelin contract and if anything would hurt
-    /**
-     * @dev IS IT BAD TO MAKE THIS PUBLIC? public function computing the pending payment of an `account` given the token historical balances and
+    /*
+     * @dev now-public function computing the pending payment of an `account` given the token historical balances and
      * already released amounts.
      */
     function pendingPaymentEth(address account) public view returns (uint256) {
         uint256 totalReceived = address(this).balance + totalReleased();
-        uint256 totalOwed_ = (totalReceived * _shares(account)) / _totalShares();
+        uint256 totalOwed_ = (totalReceived * getShares(account)) / getTotalShares();
         uint256 totalReleased_ = released(account);
         if (totalReleased_ > totalOwed_) {
           return 0;
@@ -179,14 +166,12 @@ contract PaymentSplitterOverrideShares is Context {
     }
 
     /**
-     * @dev IS IT DANGGEERROUS TO MAKE THIS PUBLIC?!!!!! I don't see why but it was private and i suspect there could be a reason for that...
-     * It would be helpful to make this public so people can know how much they can withdraw.
-     * public function computing the pending payment of an `account` given the token historical balances and
+     * @dev now-public function computing the pending payment of an `account` given the token historical balances and
      * already released amounts.
      */
     function pendingPaymentToken(address account, IERC20 token) public view returns (uint256) {
         uint256 totalReceived = token.balanceOf(address(this)) + totalReleased(token);
-        uint256 totalOwed_ = (totalReceived * _shares(account)) / _totalShares();
+        uint256 totalOwed_ = (totalReceived * getShares(account)) / getTotalShares();
         uint256 totalReleased_ = released(token, account);
         if (totalReleased_ > totalOwed_) {
           return 0;

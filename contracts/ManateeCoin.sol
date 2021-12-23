@@ -12,12 +12,12 @@ contract ManateeToken is ERC20, PaymentSplitterOverrideShares {
         // _mint(0x8464135c8F25Da09e49BC8782676a84730C318bC, 10000); //placeholder address for other tokenholders of course
     }
 
-    function _shares(address account) public view override returns (uint256) {
+    function getShares(address account) public view override returns (uint256) {
         return balanceOf(account);
 
       }
 
-    function _totalShares() public view override returns (uint256) {
+    function getTotalShares() public view override returns (uint256) {
         return totalSupply();
       }
 

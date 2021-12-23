@@ -1,4 +1,4 @@
 Provisioner:
 - returns all pending payments atomically if payment fails
 Book:
-- fractional shares with royalties behave as expected
+- further check fractional shares with royalties behave as expected
