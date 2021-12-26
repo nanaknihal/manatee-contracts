@@ -1,5 +1,6 @@
 const { expect } = require('chai');
 const { ethers } = require('hardhat');
+const { balance, constants, ether, expectEvent, send, expectRevert } = require('@openzeppelin/test-helpers');
 
 const pu = ethers.utils.parseUnits
 
@@ -52,11 +53,38 @@ describe('Pending payment calculation', function() {
     await genericToken.transfer(e.address, 100000);
   });
 
-  it('Implement this', async function(){
+  it('Implement this if time; it is already covered by integration tests but might as well make a unit test for it too if integration tests take too long to run', async function(){
 
   });
 
 });
+
+// describe('Events', function() {
+//   beforeEach(async function() {
+//     [owner, addr1, addr2] = await ethers.getSigners();
+//     e = await generateERC20DividendsTokenContract();
+//     let cf = await ethers.getContractFactory('GenericTestERC20');
+//     genericToken = cf.attach(e.paymentToken());
+//     //transfer 25% of shares from the owner (who deployed paymentToken and recieved all its supply) to
+//     ownerBalance = await e.balanceOf(owner.address);
+//     console.log(ownerBalance)
+//     // tokenContract.transfer(addr1.address, ownerBalance.mul(3).div(4));
+//     await genericToken.transfer(e.address, 100000);
+//   });
+//
+//   it('Payment Release event when released', async function(){
+//     tx = await e.release(100);
+//     let receipt = await tx.wait();
+//     console.log(receipt.events);
+//     console.log({ token: genericToken.address, to: owner.address, amount: 100 });
+//     expectEvent(
+//           await e.release(100),
+//           'ERC20PaymentReleased',
+//           { token: genericToken.address, to: owner.address, amount: 100 },
+//         );
+//   });
+//
+// });
 
 
 describe('Pulling Dividends', function() {

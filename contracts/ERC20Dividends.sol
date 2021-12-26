@@ -4,10 +4,8 @@ import "@openzeppelin/contracts/utils/math/Math.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
-import "@openzeppelin/contracts/utils/Context.sol";
 import "hardhat/console.sol";
 
-// NOTE: assumes fixed supply, makes sure nobody can mint more if using this ... or does it not assume this?/
 
 contract ERC20Dividends is ERC20 {
   using Math for uint256;
@@ -16,7 +14,6 @@ contract ERC20Dividends is ERC20 {
 
   IERC20 public paymentToken;
   uint256 private _totalReleased;
-  mapping(address => uint256) private _released;
   mapping(address => uint256) private _withheld;
 
   constructor(string memory name, string memory symbol, IERC20 paymentToken_) ERC20(name, symbol) public payable {
@@ -29,11 +26,7 @@ contract ERC20Dividends is ERC20 {
       return _totalReleased;
   }
 
-  function released(address account) public view returns (uint256) {
-      return _released[account];
-  }
 
-  // TEST THIS
   function withheld(address account) public view returns (uint256) {
       return _withheld[account];
   }
@@ -69,7 +62,6 @@ contract ERC20Dividends is ERC20 {
     require(balanceOf(account) > 0, "ERC20Dividends: account has no shares");
     require(amount <= pendingPayment(account), "ERC20Dividends: amount requested exceeds amount owed");
 
-    // _released[account] += amount;
     _totalReleased += amount;
 
     SafeERC20.safeTransfer(paymentToken, account, amount);
