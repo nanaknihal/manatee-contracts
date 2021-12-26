@@ -93,7 +93,7 @@ describe('Pulling Dividends', function() {
   });
 
   //transfer these percents of shares and ensure dividends are treated right: (percents are used instead of decimals due to ease of multiplication by a BigNumber)
-  for (const testPct of [50, 49, 51, 25, 80, 99, 0, 100]) {
+  for (const testPct of [50, 49, 51, 25, 80, 99, 0, 1, 100]) {
     it('Transferring shares results in dividends from transferred shares being distributed to sender and all shares being withheld from sender and receiver', async function(){
       let pending = await e.pendingPayment(owner.address), ownerBalance = await e.balanceOf(owner.address), totalSupply = await e.totalSupply(), shareFrac = ownerBalance.div(totalSupply);
       await e.transfer(addr1.address, ownerBalance.mul(testPct).div(100));
@@ -106,7 +106,7 @@ describe('Pulling Dividends', function() {
     });
   }
 
-  for (const testPct of [49, 50, 51, 30, 99, 0, 100]) {
+  for (const testPct of [49, 50, 51, 30, 99, 0, 1, 100]) {
     it('Selling shares results in dividends from sold shares being distributed to seller and withheld from buyer, even with intermediary payment to token contract', async function(){
       let pending = await e.pendingPayment(owner.address), ownerBalance = await e.balanceOf(owner.address), totalSupply = await e.totalSupply(), shareFrac = ownerBalance.div(totalSupply);
       await e.transfer(addr1.address, ownerBalance.mul(testPct).div(100));
@@ -120,8 +120,9 @@ describe('Pulling Dividends', function() {
       // expect(await e.withheld(addr1.address)).to.equal(pending.mul(testPct).div(100));
     });
   }
-  for (const testPct of [49]){//, 50, 51, 30, 99, 0, 100]) {
-    for (const testTransferPct of [49]){//, 50, 51, 30, 99, 0, 100]){
+  
+  for (const testPct of [49, 50, 51, 30, 99, 1, 100]) {
+    for (const testTransferPct of [49, 50, 51, 30, 99, 1, 100]){
       it('Selling shares results in dividends from sold shares being distributed to seller and withheld from buyer, even with intermediary payment to token contract and intermediate selling of shares', async function(){
         let pending = await e.pendingPayment(owner.address), ownerBalance = await e.balanceOf(owner.address), totalSupply = await e.totalSupply(), shareFrac = ownerBalance.div(totalSupply);
         await e.transfer(addr1.address, ownerBalance.mul(testPct).div(100));
@@ -130,12 +131,12 @@ describe('Pulling Dividends', function() {
         await e.connect(addr1).transfer(addr2.address, (await e.balanceOf(addr1.address)).mul(testTransferPct).div(100));
         expect(await genericToken.balanceOf(addr1.address)).to.equal(shareOfAddition.mul(testPct).div(100));
         expect(await e.pendingPayment(addr1.address)).to.equal(0);
-        // expect(await e.pendingPayment(addr1.address)).to.equal(dividendValue.mul(testTransferPct).div(100));
+        expect(await e.pendingPayment(addr2.address)).to.equal(0);
 
-        // console.log('asfgf', await e.balanceOf(addr1.address), await e.balanceOf(addr2.address), await e.withheld(addr1.address), await e.withheld(addr2.address), await e.pendingPayment(addr1.address), await e.pendingPayment(addr2.address));
+        await genericToken.transfer(e.address, additionToPool);
+        expect(await e.pendingPayment(addr1.address)).to.equal(shareOfAddition.mul(testPct).div(100).mul(100 - testTransferPct).div(100));
+        expect(await e.pendingPayment(addr2.address)).to.equal(shareOfAddition.mul(testPct).div(100).mul(      testTransferPct).div(100));
 
-        // expect(await e.withheld(owner.address)).to.equal(0);
-        // expect(await e.withheld(addr1.address)).to.equal(pending.mul(testPct).div(100));
       });
     }
   }
