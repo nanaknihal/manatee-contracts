@@ -16,7 +16,7 @@ contract ERC20Dividends is ERC20 {
   IERC20 public paymentToken;
   uint256 private _totalReleased;
   mapping(address => uint256) private _released;
-  mapping(address => uint256) private _withholding;
+  mapping(address => uint256) private _withheld;
 
   constructor(string memory name, string memory symbol, IERC20 paymentToken_) ERC20(name, symbol) public payable {
     paymentToken = paymentToken_;
@@ -32,6 +32,11 @@ contract ERC20Dividends is ERC20 {
       return _released[account];
   }
 
+  // TEST THIS
+  function withheld(address account) public view returns (uint256) {
+      return _withheld[account];
+  }
+
   function _beforeTokenTransfer(address from, address to, uint256 amount) internal override {
     //this is not the most gas-efficient, as it is running this if statement for every transfer when it only needs it upon initializating
     //but it's the easiest way to allow _mint() to be called when totalSupply is 0. totalSupply can only be 0 during initialization (as long as it's initialized with some supply) as this contract does not have public burning functions
@@ -41,19 +46,23 @@ contract ERC20Dividends is ERC20 {
     }
     uint256 totalReceived = paymentToken.balanceOf(address(this)) + totalReleased();
     uint256 dividendValue = totalReceived * amount / totalSupply();
+    console.log('dividendValue is ', dividendValue);
+    //instead of witholding from msg.sender (as public-facing release()) does, withold from the recipient of shares
     _release(from, dividendValue);
-    _withholding[to] += dividendValue;
+    _withheld[to] += dividendValue;
   }
 
   function release(uint256 amount) public {
       _release(msg.sender, amount);
+      // is it safe to have this happen AFTER _release? could anything fail, preventing withholding after _release? I don't think so, but it concerns me
+      _withheld[msg.sender] += amount;
   }
 
   function _release(address account, uint256 amount) private {
     require(balanceOf(account) > 0, "ERC20Dividends: account has no shares");
     require(amount <= pendingPayment(account), "ERC20Dividends: amount requested exceeds amount owed");
 
-    _released[account] += amount;
+    // _released[account] += amount;
     _totalReleased += amount;
 
     SafeERC20.safeTransfer(paymentToken, account, amount);
@@ -62,12 +71,13 @@ contract ERC20Dividends is ERC20 {
 
   function pendingPayment(address account) public view returns (uint256) {
       uint256 totalReceived = paymentToken.balanceOf(address(this)) + totalReleased();
-      uint256 totalOwed_ = (totalReceived * balanceOf(account)) / totalSupply() - _withholding[account];
-      uint256 totalReleased_ = released(account);
-      if (totalReleased_ > totalOwed_) {
+      uint256 owedToShares = (totalReceived * balanceOf(account)) / totalSupply();
+      // uint256 releasedToAccount = released(account);
+      // console.log('z', totalReceived, owedToAccount, releasedToAccount);
+      if (_withheld[account] > owedToShares) {
         return 0;
       } else {
-        return totalOwed_ - totalReleased_;
+        return owedToShares - _withheld[account];
       }
 
   }
