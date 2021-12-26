@@ -1,5 +1,6 @@
 pragma solidity ^0.8.0;
 
+import "@openzeppelin/contracts/utils/math/Math.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
@@ -9,6 +10,7 @@ import "hardhat/console.sol";
 // NOTE: assumes fixed supply, makes sure nobody can mint more if using this ... or does it not assume this?/
 
 contract ERC20Dividends is ERC20 {
+  using Math for uint256;
   event ERC20PaymentReleased(IERC20 indexed token, address to, uint256 amount);
   event PaymentReceived(address from, uint256 amount);
 
@@ -44,11 +46,17 @@ contract ERC20Dividends is ERC20 {
       return;
     }
     uint256 totalReceived = paymentToken.balanceOf(address(this)) + totalReleased();
-    uint256 dividendValue = totalReceived * amount / totalSupply();
-    console.log('dividendValue is ', dividendValue);
-    //instead of witholding from msg.sender (as public-facing release()) does, withold from the recipient of shares
+    // could sacrifice code readability in these two lines to save a bit of gas:
+    uint256 owedToFromShares = (totalReceived * balanceOf(from)) / totalSupply();
+    uint256 owedToTheseShares = totalReceived * amount / totalSupply();
+
+    // dividendValue is how much is owed to shareholder of *amount* shares, minus what is being withheld. however, if withholding is greater than dividend value, it should just be 0, not negative
+    uint256 dividendValue = pendingPayment(from);
+    // instead of witholding from msg.sender (as public-facing release()) does, withold from the recipient of shares
     _release(from, dividendValue);
-    _withheld[to] += dividendValue;
+    _withheld[to] += owedToTheseShares;
+    // get rid of any withholdings that are now in excess of what the account shares are owed
+    _withheld[from] = owedToFromShares - owedToTheseShares;
   }
 
   function release(uint256 amount) public {
@@ -71,13 +79,7 @@ contract ERC20Dividends is ERC20 {
   function pendingPayment(address account) public view returns (uint256) {
       uint256 totalReceived = paymentToken.balanceOf(address(this)) + totalReleased();
       uint256 owedToShares = (totalReceived * balanceOf(account)) / totalSupply();
-      // uint256 releasedToAccount = released(account);
-      // console.log('z', totalReceived, owedToAccount, releasedToAccount);
-      if (_withheld[account] > owedToShares) {
-        return 0;
-      } else {
-        return owedToShares - _withheld[account];
-      }
+      return owedToShares > _withheld[account] ? owedToShares - _withheld[account] : 0;
 
   }
 }
