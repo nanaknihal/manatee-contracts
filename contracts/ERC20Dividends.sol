@@ -9,7 +9,6 @@ import "hardhat/console.sol";
 // NOTE: assumes fixed supply, makes sure nobody can mint more if using this ... or does it not assume this?/
 
 contract ERC20Dividends is ERC20 {
-  event PaymentReleased(address to, uint256 amount);
   event ERC20PaymentReleased(IERC20 indexed token, address to, uint256 amount);
   event PaymentReceived(address from, uint256 amount);
 

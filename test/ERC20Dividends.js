@@ -49,7 +49,7 @@ describe('Pending payment calculation', function() {
     ownerBalance = await e.balanceOf(owner.address);
     console.log(ownerBalance)
     // tokenContract.transfer(addr1.address, ownerBalance.mul(3).div(4));
-    genericToken.transfer(e.address, 100000);
+    await genericToken.transfer(e.address, 100000);
   });
 
   it('Implement this', async function(){
@@ -93,34 +93,36 @@ describe('Pulling Dividends', function() {
   });
 
   //transfer these percents of shares and ensure dividends are treated right: (percents are used instead of decimals due to ease of multiplication by a BigNumber)
-  for (const testPct of [50]){//}, 25, 80, 0, 100]) {
+  for (const testPct of [50, 25, 80, 0, 100]) {
     it('Transferring shares results in dividends from transferred shares being distributed to sender and withheld from receiver', async function(){
-      let pending = await e.pendingPayment(owner.address);
-      let ownerBalance = await e.balanceOf(owner.address);
-      let totalSupply = await e.totalSupply();
-      let shareFrac = ownerBalance.div(totalSupply);
+      let pending = await e.pendingPayment(owner.address), ownerBalance = await e.balanceOf(owner.address), totalSupply = await e.totalSupply(), shareFrac = ownerBalance.div(totalSupply);
       await e.transfer(addr1.address, ownerBalance.mul(testPct).div(100));
-      // expect(await e.released(owner.address)).to.equal(pending.mul(testPct).div(100));
-      // expect(await e.released(addr1.address)).to.equal(0);
-      console.log(await e.pendingPayment(owner.address), await e.withheld(addr1.address), await e.withheld(owner.address), pending, pending.mul(100 - testPct).div(100), await e.pendingPayment(owner.address), 'ASDFASDKKJ');
       expect(await e.pendingPayment(owner.address)).to.equal(pending.mul(100 - testPct).div(100));
       expect(await e.pendingPayment(addr1.address)).to.equal(0);
       expect(await e.withheld(owner.address)).to.equal(0);
       expect(await e.withheld(addr1.address)).to.equal(pending.mul(testPct).div(100));
-
-
     });
   }
 
-  it('Selling shares results in dividends from sold shares being distributed to seller and withheld from buyer, even with intermediary payment to Book contract and intermediate selling of shares', async function(){
+  for (const testPct of [49, 30, 99, 0, 100]) {
+    it('Selling shares results in dividends from sold shares being distributed to seller and withheld from buyer, even with intermediary payment to token contract', async function(){
+      let pending = await e.pendingPayment(owner.address), ownerBalance = await e.balanceOf(owner.address), totalSupply = await e.totalSupply(), shareFrac = ownerBalance.div(totalSupply);
+      await e.transfer(addr1.address, ownerBalance.mul(testPct).div(100));
+      let additionToPool = 100000, shareOfAddition = shareFrac.mul(additionToPool);
+      await genericToken.transfer(e.address, 100000);
+      expect(await e.pendingPayment(owner.address)).to.equal((pending.add(shareOfAddition)).mul(100 - testPct).div(100));
+      expect(await e.pendingPayment(addr1.address)).to.equal(shareOfAddition.mul(testPct).div(100));
+      expect(await e.withheld(owner.address)).to.equal(0);
+      expect(await e.withheld(addr1.address)).to.equal(pending.mul(testPct).div(100));
+    });
+  }
+
+  it('Selling shares results in dividends from sold shares being distributed to seller and withheld from buyer, even with intermediary payment to token contract and intermediate selling of shares', async function(){
 
   });
 
-  it('Selling shares results in dividends from sold shares being distributed to seller and withheld from buyer, even with intermediary payment to Book contract', async function(){
 
-  });
-
-  it('Selling shares results in dividends from sold shares being distributed to seller and withheld from buyer, even with intermediary payment to Book contract and intermediate selling of shares', async function(){
+  it('Selling shares results in dividends from sold shares being distributed to seller and withheld from buyer, even with intermediary payment to token contract and intermediate selling of shares', async function(){
 
   });
 });
