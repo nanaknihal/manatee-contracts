@@ -45,7 +45,7 @@ contract VestingVault is Ownable {
         require(amountVestedPerDay > 0, "amountVestedPerDay > 0");// Amount vested per day should be greater than zero - check for validity
 
         // Transfer the total grant tokens, for this specific recipient, under the control of the vesting contract
-        // We have two way to give the contract the required tokens:
+        // We have two options for giving the contract the required tokens:
                 // 1 - give the contract permission through token.approve() function of the ERC20 to withdraw tokens from the Owner's account,
                 // 2 - Just directly deposit the required tokens to the contract address. If this method is chosen the next line can be removed.
         require(token.transferFrom(owner(), address(this), _amount));
