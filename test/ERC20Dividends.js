@@ -171,31 +171,31 @@ describe('Pulling Dividends', function() {
   //     });
   //   }
   // }
-
-  for (const testPct of [49, 50, 51, 30, 99, 1, 100]) {
-    for (const testTransferPct of [49, 50, 51, 30, 99, 1, 100]){
-        for (const releasePct of [49, 50, 51, 30, 99, 1, 100]){
-          it('May take a while going through edge cases: Selling shares results in dividends from sold shares being distributed to seller and withheld from buyer, even with intermediary payment to token contract, intermediate selling of shares, and intermediate releasing', async function(){
-            let ownerBalance = await e.balanceOf(owner.address), shareFrac = ownerBalance.div(await e.totalSupply());
-            await e.transfer(addr1.address, ownerBalance.mul(testPct).div(100));
-
-            let additionToPool = 100000, shareOfAddition = shareFrac.mul(additionToPool);
-            await genericToken.transfer(e.address, additionToPool);
-
-            let pending = await e.pendingPayment(owner.address);
-            e.release(pending.mul(releasePct).div(100));
-            expect(await e.pendingPayment(owner.address)).to.equal(pending.mul(shareFrac).mul(100 - releasePct).div(100));
-
-            await e.connect(addr1).transfer(addr2.address, (await e.balanceOf(addr1.address)).mul(testTransferPct).div(100));
-            expect(await genericToken.balanceOf(addr1.address)).to.equal(shareOfAddition.mul(testPct).div(100));
-            expect(await e.pendingPayment(addr1.address)).to.equal(0);
-            expect(await e.pendingPayment(addr2.address)).to.equal(0);
-
-            await genericToken.transfer(e.address, additionToPool);
-            expect(await e.pendingPayment(addr1.address)).to.equal(shareOfAddition.mul(testPct).div(100).mul(100 - testTransferPct).div(100));
-            expect(await e.pendingPayment(addr2.address)).to.equal(shareOfAddition.mul(testPct).div(100).mul(      testTransferPct).div(100));
-
-        });
+  // // UNCOMMENT
+  // for (const testPct of [49, 50, 51, 30, 99, 1, 100]) {
+  //   for (const testTransferPct of [49, 50, 51, 30, 99, 1, 100]){
+  //       for (const releasePct of [49, 50, 51, 30, 99, 1, 100]){
+  //         it('May take a while going through edge cases: Selling shares results in dividends from sold shares being distributed to seller and withheld from buyer, even with intermediary payment to token contract, intermediate selling of shares, and intermediate releasing', async function(){
+  //           let ownerBalance = await e.balanceOf(owner.address), shareFrac = ownerBalance.div(await e.totalSupply());
+  //           await e.transfer(addr1.address, ownerBalance.mul(testPct).div(100));
+  //
+  //           let additionToPool = 100000, shareOfAddition = shareFrac.mul(additionToPool);
+  //           await genericToken.transfer(e.address, additionToPool);
+  //
+  //           let pending = await e.pendingPayment(owner.address);
+  //           e.release(pending.mul(releasePct).div(100));
+  //           expect(await e.pendingPayment(owner.address)).to.equal(pending.mul(shareFrac).mul(100 - releasePct).div(100));
+  //
+  //           await e.connect(addr1).transfer(addr2.address, (await e.balanceOf(addr1.address)).mul(testTransferPct).div(100));
+  //           expect(await genericToken.balanceOf(addr1.address)).to.equal(shareOfAddition.mul(testPct).div(100));
+  //           expect(await e.pendingPayment(addr1.address)).to.equal(0);
+  //           expect(await e.pendingPayment(addr2.address)).to.equal(0);
+  //
+  //           await genericToken.transfer(e.address, additionToPool);
+  //           expect(await e.pendingPayment(addr1.address)).to.equal(shareOfAddition.mul(testPct).div(100).mul(100 - testTransferPct).div(100));
+  //           expect(await e.pendingPayment(addr2.address)).to.equal(shareOfAddition.mul(testPct).div(100).mul(      testTransferPct).div(100));
+  //
+  //       });
       }
     }
   }
