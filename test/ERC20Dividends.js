@@ -171,7 +171,7 @@ describe('Pulling Dividends', function() {
   //     });
   //   }
   // }
-  // // UNCOMMENT
+  // 
   // for (const testPct of [49, 50, 51, 30, 99, 1, 100]) {
   //   for (const testTransferPct of [49, 50, 51, 30, 99, 1, 100]){
   //       for (const releasePct of [49, 50, 51, 30, 99, 1, 100]){
@@ -196,7 +196,7 @@ describe('Pulling Dividends', function() {
   //           expect(await e.pendingPayment(addr2.address)).to.equal(shareOfAddition.mul(testPct).div(100).mul(      testTransferPct).div(100));
   //
   //       });
-      }
-    }
-  }
+  //     }
+  //   }
+  // }
 });
