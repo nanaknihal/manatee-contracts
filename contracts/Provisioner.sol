@@ -22,6 +22,8 @@ contract Provisioner {
     Book private book;
 
     constructor(address payable bookAddr_, address payable manatAddr_) {
+      console.log('WARNING: MANATADDR IS BEING PASSED AS AN ARGUMENT. THIS SHOULD ABSOLUTELY NOT HAPPEN WHEN DEPLOYED TO MAINNET; THIS IS ONLY A TESTING CONVENIENCE');
+
         bookAddr = bookAddr_;
         book = Book(bookAddr);
         manatAddr = manatAddr_;

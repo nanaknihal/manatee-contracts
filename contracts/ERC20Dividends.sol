@@ -16,9 +16,11 @@ contract ERC20Dividends is ERC20 {
   uint256 private _totalReleased;
   mapping(address => uint256) private _withheld;
 
-  constructor(string memory name, string memory symbol, IERC20 paymentToken_) ERC20(name, symbol) public payable {
-    paymentToken = paymentToken_;
-    _mint(msg.sender, 1000000000 * 10 ** decimals());
+  constructor(string memory name, string memory symbol, uint256 supply_, address paymentToken_) ERC20(name, symbol) public payable {
+    paymentToken = IERC20(paymentToken_);
+    console.log('totalSupply', totalSupply());
+    _mint(msg.sender, supply_ * 10 ** decimals());
+    console.log('totalSupply', totalSupply());
   }
 
 
@@ -32,12 +34,14 @@ contract ERC20Dividends is ERC20 {
   }
 
   function _beforeTokenTransfer(address from, address to, uint256 amount) internal override {
+    console.log(from, to, amount);
     //this is not the most gas-efficient, as it is running this if statement for every transfer when it only needs it upon initializating
     //but it's the easiest way to allow _mint() to be called when totalSupply is 0. totalSupply can only be 0 during initialization (as long as it's initialized with some supply) as this contract does not have public burning functions
     //it's a low overhead though
-    if(totalSupply() == 0){
+    if(from == address(0)){
       return;
     }
+
     uint256 totalReceived = paymentToken.balanceOf(address(this)) + totalReleased();
     // could sacrifice code readability in these two lines to save a bit of gas:
     uint256 owedToFromShares = (totalReceived * balanceOf(from)) / totalSupply();

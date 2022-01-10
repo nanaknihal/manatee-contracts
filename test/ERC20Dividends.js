@@ -16,7 +16,7 @@ const generateGenericTokenContract = async (fromAddr = null) => {
 const generateERC20DividendsTokenContract = async (fromAddr = null) => {
   const ERC20Dividends = await ethers.getContractFactory('ERC20Dividends');
   const e2dFrom = fromAddr ? ERC20Dividends.connect(fromAddr) : ERC20Dividends;
-  const e2d = await e2dFrom.deploy('Token Name', 'SYMBOL', (await generateGenericTokenContract()).address);
+  const e2d = await e2dFrom.deploy('Token Name', 'SYMBOL', 100000000, (await generateGenericTokenContract()).address);
   await e2d.deployed();
   return e2d;
 }
@@ -171,7 +171,7 @@ describe('Pulling Dividends', function() {
   //     });
   //   }
   // }
-  // 
+  //
   // for (const testPct of [49, 50, 51, 30, 99, 1, 100]) {
   //   for (const testTransferPct of [49, 50, 51, 30, 99, 1, 100]){
   //       for (const releasePct of [49, 50, 51, 30, 99, 1, 100]){

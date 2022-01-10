@@ -6,10 +6,11 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 import "contracts/Provisioner.sol";
-import "contracts/PaymentSplitterOverrideShares.sol";
+import "contracts/ERC20Dividends.sol";
+// import "contracts/PaymentSplitterOverrideShares.sol";
 // import "@openzeppelin/contracts/finance/PaymentSplitter.sol";
 
-contract Book is ERC20, Ownable, PaymentSplitterOverrideShares { //PaymentSplitterOverrideShares
+contract Book is ERC20Dividends, Ownable { //PaymentSplitterOverrideShares
     string public _name;
     uint public price;
     address public priceDenomination;
@@ -19,13 +20,13 @@ contract Book is ERC20, Ownable, PaymentSplitterOverrideShares { //PaymentSplitt
     bool public resaleEnabled;
     Provisioner public provisioner;
 
-    constructor(string memory name_, string memory symbol_, uint supply_, uint price_, address priceDenomination_, bool resaleEnabled_, address payable manatAddr) PaymentSplitterOverrideShares() Ownable() ERC20(name_, symbol_) {
+    constructor(string memory name_, string memory symbol_, uint supply_, uint price_, address priceDenomination_, bool resaleEnabled_, address payable manatAddr) ERC20Dividends(name_, symbol_, supply_, priceDenomination_) Ownable() {
+        console.log('WARNING: MANATEE ADDRESS IS BEING PASSED AS AN ARGUMENT. THIS SHOULD ABSOLUTELY NOT HAPPEN WHEN DEPLOYED TO MAINNET; THIS IS ONLY A TESTING CONVENIENCE');
         _name = name_;
         price = price_;
         priceDenomination = priceDenomination_;
         resaleEnabled = resaleEnabled_;
         provisioner = new Provisioner(payable(address(this)), manatAddr);
-        _mint(msg.sender, supply_);
         _transferOwnership(msg.sender);
         //throw;//('please test addRentalPeriod and removeRentalPeriod');
     }
@@ -70,14 +71,14 @@ contract Book is ERC20, Ownable, PaymentSplitterOverrideShares { //PaymentSplitt
     //   bookHash = newBookHash;
     // }
 
-    function getShares(address account) public view override returns (uint256) {
-        return balanceOf(account);
-
-      }
-
-    function getTotalShares() public view override returns (uint256) {
-        return totalSupply();
-      }
+    // function getShares(address account) public view override returns (uint256) {
+    //     return balanceOf(account);
+    //
+    //   }
+    //
+    // function getTotalShares() public view override returns (uint256) {
+    //     return totalSupply();
+    //   }
 
 
 }
