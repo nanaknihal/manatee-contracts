@@ -13,26 +13,26 @@ import "contracts/ERC20Dividends.sol";
 contract Book is ERC20Dividends, Ownable { //PaymentSplitterOverrideShares
     string public _name;
     uint public price;
-    address public priceDenomination;
+    address public priceToken;
     mapping(uint256 => uint256) public rentalPeriods; //maps number of days to price, e.g. 30 day rental to 15000000 USDC
     //string public bookHash; //bookHashes are not used on-chain; they are mostly for quasi-IP purposes are stored as strings to allow choice of the hash algorithm.
     mapping (string => string) public bookVersions; //maps hash of a book to link of its content
     bool public resaleEnabled;
     Provisioner public provisioner;
 
-    constructor(string memory name_, string memory symbol_, uint supply_, uint price_, address priceDenomination_, bool resaleEnabled_, address payable manatAddr) ERC20Dividends(name_, symbol_, supply_, priceDenomination_) Ownable() {
+    constructor(string memory name_, string memory symbol_, uint supply_, uint price_, address priceToken_, bool resaleEnabled_, address payable manatAddr) ERC20Dividends(name_, symbol_, supply_, priceToken_) Ownable() {
         console.log('WARNING: MANATEE ADDRESS IS BEING PASSED AS AN ARGUMENT. THIS SHOULD ABSOLUTELY NOT HAPPEN WHEN DEPLOYED TO MAINNET; THIS IS ONLY A TESTING CONVENIENCE');
         _name = name_;
         price = price_;
-        priceDenomination = priceDenomination_;
+        priceToken = priceToken_;
         resaleEnabled = resaleEnabled_;
         provisioner = new Provisioner(payable(address(this)), manatAddr);
         _transferOwnership(msg.sender);
         //throw;//('please test addRentalPeriod and removeRentalPeriod');
     }
 
-    function setPriceDenomination(address newPriceDenomination) public onlyOwner {
-      priceDenomination = newPriceDenomination;
+    function setPriceToken(address newPriceToken) public onlyOwner {
+      priceToken = newPriceToken;
     }
 
     function setPrice(uint newPrice) public onlyOwner {

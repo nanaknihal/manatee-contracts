@@ -30,47 +30,42 @@ contract Provisioner {
     }
 
     //will charge the book's price plus token 'tip' to marketplace
-    function buy(address marketplaceAddr, uint256 marketplaceTip, address marketplaceTipDenomination) public {
-      buy(msg.sender, marketplaceAddr, marketplaceTip, marketplaceTipDenomination);
+    function buy(address marketplaceAddr, uint256 marketplaceTip, address marketplaceTipToken) public {
+      buy(msg.sender, marketplaceAddr, marketplaceTip, marketplaceTipToken);
     }
 
     //will charge the book's price plus token 'tip' to marketplace, overloaded to buy a book for someone/something else
-    // function buy(address recipient, address marketplaceAddr, uint256 marketplaceTip, address marketplaceTipDenomination) public {
-    //   _buy(recipient, marketplaceAddr, marketplaceTip, marketplaceTipDenomination);
+    // function buy(address recipient, address marketplaceAddr, uint256 marketplaceTip, address marketplaceTipToken) public {
+    //   _buy(recipient, marketplaceAddr, marketplaceTip, marketplaceTipToken);
     // }
 
-    function buy(address recipient, address marketplaceAddr, uint256 marketplaceTip, address marketplaceTipDenomination) public {
+    function buy(address recipient, address marketplaceAddr, uint256 marketplaceTip, address marketplaceTipToken) public {
       require(!owners[recipient], "recipient already owns a copy");
-      IERC20 priceToken = IERC20(book.priceDenomination());
-      IERC20 tipToken = IERC20(marketplaceTipDenomination);
-      uint256 fee = book.price() / 10; // book.price() / manateeToken.feeDivisor();
-      require(priceToken.transferFrom(msg.sender, bookAddr, book.price() - fee), "Need to pay enough for book");
-      require(priceToken.transferFrom(msg.sender, manatAddr, fee), "Need to pay enough for book");
-      require(tipToken.transferFrom(msg.sender, marketplaceAddr, marketplaceTip), "Need to pay enough to marketplace");
-
+      require(_processPayment(book.price(), marketplaceAddr, marketplaceTip, marketplaceTipToken), "payment processing failed");
       owners[recipient] = true;
     }
 
-    function rent(uint256 numDays, address marketplaceAddr, uint256 marketplaceTip, address marketplaceTipDenomination) public {
+    function rent(uint256 numDays, address marketplaceAddr, uint256 marketplaceTip, address marketplaceTipToken) public {
       uint256 price = book.rentalPeriods(numDays);
       require(price > 0, "invalid rental period");
       require(!owners[msg.sender], "you already own the book you are trying to rent");
-      IERC20 priceToken = IERC20(book.priceDenomination());
-      IERC20 tipToken = IERC20(marketplaceTipDenomination);
-      uint256 fee = book.price() / 10; //book.price() / manateeToken.feeDivisor();
-      require(priceToken.transferFrom(msg.sender, bookAddr, price - fee), "Need to pay enough for book");
-      require(priceToken.transferFrom(msg.sender, manatAddr, fee), "Need to pay enough for book");
-      require(tipToken.transferFrom(msg.sender, marketplaceAddr, marketplaceTip), "Need to pay enough to marketplace");
+      require(_processPayment(price, marketplaceAddr, marketplaceTip, marketplaceTipToken), "payment processing failed");
       _rentIndiscriminantly(msg.sender, numDays * 1 days);
     }
 
-    // function rent(address addr, uint256 numDays) public {
-    //   uint256 price = book.rentalPeriods()[numDays];
-    //   require(price, "invalid rental period");
-    //   IERC20 token = IERC20(book.priceDenomination());
-    //   require(token.transferFrom(msg.sender, address(this), price));
-    //   _rent(addr, numDays);
-    // }
+    function _processPayment(uint256 price, address marketplaceAddr, uint256 marketplaceTip, address marketplaceTipToken) private   returns (bool) {
+      IERC20 priceToken_ = IERC20(book.priceToken());
+      IERC20 tipToken_ = IERC20(marketplaceTipToken);
+      uint256 fee = book.price() / 10; //book.price() / manateeToken.feeDivisor();
+
+      require(priceToken_.transferFrom(msg.sender, bookAddr, price - fee), "Need to pay enough for book");
+      require(priceToken_.transferFrom(msg.sender, manatAddr, fee), "Need to pay enough for book");
+      require(tipToken_.transferFrom(msg.sender, marketplaceAddr, marketplaceTip), "Need to pay enough to marketplace");
+
+      return true;
+
+    }
+
 
     // private method to grants access without checking payment was successful
     function _rentIndiscriminantly(address addr, uint256 duration) private {
