@@ -24,6 +24,7 @@ contract Book is ERC20Dividends, Ownable { //PaymentSplitterOverrideShares
         console.log('WARNING: MANATEE ADDRESS IS BEING PASSED AS AN ARGUMENT. THIS SHOULD ABSOLUTELY NOT HAPPEN WHEN DEPLOYED TO MAINNET; THIS IS ONLY A TESTING CONVENIENCE');
         _name = name_;
         price = price_;
+        require(priceToken_ == 0xe6b8a5cf854791412c1f6efc7caf629f5df1c747, "only USDC is allowed in V1");
         priceToken = priceToken_;
         resaleEnabled = resaleEnabled_;
         provisioner = new Provisioner(payable(address(this)), manatAddr);
@@ -32,6 +33,7 @@ contract Book is ERC20Dividends, Ownable { //PaymentSplitterOverrideShares
     }
 
     function setPriceToken(address newPriceToken) public onlyOwner {
+      require(newPriceToken == 0xe6b8a5cf854791412c1f6efc7caf629f5df1c747, "only USDC is allowed in V1");
       priceToken = newPriceToken;
     }
 
