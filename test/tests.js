@@ -27,7 +27,7 @@ const generateBook = async (manatAddr, fromAddr = null) => {
   const Book = await ethers.getContractFactory('Book');
   const bookFrom = fromAddr ? Book.connect(fromAddr) : Book;
   //string memory name_, string memory symbol_, uint supply_, uint price_, address priceToken_, bool resaleEnabled_, address payable manatAddr
-  const paymentToken = await generateGenericToken();
+  const paymentToken = await generateDAI();
   console.log('PAYMENT TOKEN SHOULD BE ', paymentToken.address);
   const book = await bookFrom.deploy('Name of A Book', 'BOOKSYMBOL', 1000000, 15000000, paymentToken.address, false, manatAddr);
   await book.deployed();
@@ -38,7 +38,7 @@ const generateBookFromFactory = async (manatAddr, fromAddr = null) => {
   const BookFactory = await ethers.getContractFactory('BookFactory');
   const bookFactoryFrom = fromAddr ? BookFactory.connect(fromAddr) : BookFactory;
   //string memory name_, string memory symbol_, uint supply_, uint price_, address priceToken_, bool resaleEnabled_, address payable manatAddr
-  const paymentToken = await generateGenericToken();
+  const paymentToken = await generateUSDT();
   console.log('PAYMENT TOKEN SHOULD BE ', paymentToken.address);
   const bookFactory = await bookFactoryFrom.deploy();
   const book = await bookFactoryFrom.createBook('Name of A Book', 'BOOKSYMBOL', 1000000, 15000000, paymentToken.address, false, manatAddr);

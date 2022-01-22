@@ -1,0 +1,12 @@
+[
+  "constructor(address,address)",
+  "function bookAddr() view returns (address)",
+  "function buy(address,address,uint256,address)",
+  "function buy(address,uint256,address)",
+  "function manatAddr() view returns (address)",
+  "function owners(address) view returns (bool)",
+  "function rent(uint256,address,uint256,address)",
+  "function renters(address) view returns (uint256, uint256)",
+  "function transferPurchase(address)",
+  "function transferRental(address)"
+]

@@ -1,0 +1,9 @@
+[
+  "function addRentalPeriod(uint256,uint256)",
+  "function price() view returns (uint256)",
+  "function priceDenomination() view returns (address)",
+  "function removeRentalPeriod(uint256)",
+  "function setBookHash(string)",
+  "function setPrice(uint256)",
+  "function setPriceDenomination(address)"
+]

@@ -21,19 +21,18 @@ contract Book is ERC20Dividends, Ownable { //PaymentSplitterOverrideShares
     Provisioner public provisioner;
 
     constructor(string memory name_, string memory symbol_, uint supply_, uint price_, address priceToken_, bool resaleEnabled_, address payable manatAddr) ERC20Dividends(name_, symbol_, supply_, priceToken_) Ownable() {
-        console.log('WARNING: MANATEE ADDRESS IS BEING PASSED AS AN ARGUMENT. THIS SHOULD ABSOLUTELY NOT HAPPEN WHEN DEPLOYED TO MAINNET; THIS IS ONLY A TESTING CONVENIENCE');
         _name = name_;
         price = price_;
-        require(priceToken_ == 0xe6b8a5cf854791412c1f6efc7caf629f5df1c747, "only USDC is allowed in V1");
+        require((priceToken_ == 0xA02f6adc7926efeBBd59Fd43A84f4E0c0c91e832) || (priceToken_ == 0xd393b1E02dA9831Ff419e22eA105aAe4c47E1253), "only USDC and DAI are allowed in V1");
         priceToken = priceToken_;
         resaleEnabled = resaleEnabled_;
-        provisioner = new Provisioner(payable(address(this)), manatAddr);
+        provisioner = new Provisioner(payable(address(this)), payable(0x87b6e03b0D57771940D7cC9E92531B6217364B3E));
         _transferOwnership(msg.sender);
         //throw;//('please test addRentalPeriod and removeRentalPeriod');
     }
 
     function setPriceToken(address newPriceToken) public onlyOwner {
-      require(newPriceToken == 0xe6b8a5cf854791412c1f6efc7caf629f5df1c747, "only USDC is allowed in V1");
+      require((newPriceToken == 0xA02f6adc7926efeBBd59Fd43A84f4E0c0c91e832) || (newPriceToken == 0xd393b1E02dA9831Ff419e22eA105aAe4c47E1253), "only USDC and DAI are allowed in V1");
       priceToken = newPriceToken;
     }
 
