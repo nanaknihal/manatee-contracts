@@ -1,5 +1,5 @@
 require("@nomiclabs/hardhat-waffle");
-
+require("hardhat-abi-exporter");
 // This is a sample Hardhat task. To learn how to create your own go to
 // https://hardhat.org/guides/create-task.html
 task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
@@ -18,4 +18,27 @@ task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
  */
 module.exports = {
   solidity: "0.8.4",
+
+  abiExporter: {
+  path: './data/abi',
+  runOnCompile: true,
+  clear: true,
+  flat: true,
+  only: [],
+  spacing: 2,
+  pretty: true,
+},
+
+  defaultNetwork: "hardhat",
+  networks: {
+    hardhat: {
+      forking: {
+        url: "https://speedy-nodes-nyc.moralis.io/a1167200f0a0e81dd757304e/polygon/mumbai"
+      }
+    },
+    matic: {
+      url: "https://rpc-mumbai.maticvigil.com",
+      accounts: [process.env.PRIVATE_KEY]
+    }
+  }
 };

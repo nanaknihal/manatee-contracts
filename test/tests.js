@@ -1,15 +1,26 @@
+// NOTE: If you get an error only USDC is allowed in V1, the tests should be redesigned to cope with this new restriction I added. If you don't want to modify and add a bunch of tests in the short term, you CAN just delete the requires that throw that error in Book.js
 const { expect } = require('chai');
 const { ethers } = require('hardhat');
 
 const pu = ethers.utils.parseUnits
 let day = 24*60*60;
 
+const testnetForked = true;
 const generateManateeToken = async (fromAddr = null) =>{
-  const ManateeToken = await ethers.getContractFactory('ManateeToken');
-  const manaTFrom = fromAddr ? ManateeToken.connect(fromAddr) : ManateeToken;
-  const manaT = await manaTFrom.deploy();
-  await manaT.deployed();
-  return manaT;
+  // if testnet is forked, it will just return the manateeToken from the already-existing address
+  if(testnetForked){
+    const ManateeToken = await ethers.getContractFactory('ManateeToken');
+    const mt = await ManateeToken.attach('0x87b6e03b0D57771940D7cC9E92531B6217364B3E');
+    console.log('MANATEE totalSupply IS',  await mt.totalSupply());
+    return mt
+  } else {
+    const ManateeToken = await ethers.getContractFactory('ManateeToken');
+    const manaTFrom = fromAddr ? ManateeToken.connect(fromAddr) : ManateeToken;
+    const manaT = await manaTFrom.deploy();
+    await manaT.deployed();
+    return manaT;
+  }
+
 }
 
 const generateBook = async (manatAddr, fromAddr = null) => {
@@ -23,12 +34,52 @@ const generateBook = async (manatAddr, fromAddr = null) => {
   return book;
 }
 
+const generateBookFromFactory = async (manatAddr, fromAddr = null) => {
+  const BookFactory = await ethers.getContractFactory('BookFactory');
+  const bookFactoryFrom = fromAddr ? BookFactory.connect(fromAddr) : BookFactory;
+  //string memory name_, string memory symbol_, uint supply_, uint price_, address priceToken_, bool resaleEnabled_, address payable manatAddr
+  const paymentToken = await generateGenericToken();
+  console.log('PAYMENT TOKEN SHOULD BE ', paymentToken.address);
+  const bookFactory = await bookFactoryFrom.deploy();
+  const book = await bookFactoryFrom.createBook('Name of A Book', 'BOOKSYMBOL', 1000000, 15000000, paymentToken.address, false, manatAddr);
+
+  await book.deployed();
+  return book;
+}
+
+
 const generateGenericToken = async (fromAddr = null) => {
   const GenericTestERC20 = await ethers.getContractFactory('GenericTestERC20');
   const genericTokenFrom = fromAddr ? GenericTestERC20.connect(fromAddr) : GenericTestERC20;
   const genericToken = await genericTokenFrom.deploy();
   await genericToken.deployed();
   return genericToken;
+}
+
+const generateUSDT = async (fromAddr = null) =>{
+  // if testnet is forked, it will just return the USDT from the already-existing address
+  if(testnetForked){
+    const GenericTestERC20 = await ethers.getContractFactory('GenericTestERC20');
+    const usdt = await GenericTestERC20.attach('0xa02f6adc7926efebbd59fd43a84f4e0c0c91e832');
+    console.log('USDT totalSupply IS',  await usdt.totalSupply());
+    return usdt
+  } else {
+    return await generateGenericToken();
+  }
+
+}
+
+const generateDAI = async (fromAddr = null) =>{
+  // if testnet is forked, it will just return the USDT from the already-existing address
+  if(testnetForked){
+    const GenericTestERC20 = await ethers.getContractFactory('GenericTestERC20');
+    const dai = await GenericTestERC20.attach('0xd393b1e02da9831ff419e22ea105aae4c47e1253');
+    console.log('DAI totalSupply IS',  await dai.totalSupply());
+    return dai
+  } else {
+    return await generateGenericToken();
+  }
+
 }
 
 const scientificFormatToString = x => x.toLocaleString('fullwide', {useGrouping:false});
@@ -243,8 +294,8 @@ for (const bookPrice of [15000000, 0, 1, 10]){
     before(async function(){
       [this.owner, this.addr1, this.addr2, this.addr3, this.addr4, this.addr5, this.addr6, this.addrMarketplace] = await ethers.getSigners();
 
-      this.genericToken = await generateGenericToken();
-      this.genericToken2 = await generateGenericToken();
+      this.genericToken = await generateUSDT();
+      this.genericToken2 = await generateDAI();
       this.manat = await generateManateeToken();
       this.book = await generateBook(this.manat.address);
       await this.book.setPrice(bookPrice);
