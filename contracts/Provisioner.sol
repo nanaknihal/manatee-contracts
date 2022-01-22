@@ -22,11 +22,9 @@ contract Provisioner {
     Book private book;
 
     constructor(address payable bookAddr_, address payable manatAddr_) {
-      console.log('WARNING: MANATADDR IS BEING PASSED AS AN ARGUMENT. THIS SHOULD ABSOLUTELY NOT HAPPEN WHEN DEPLOYED TO MAINNET; THIS IS ONLY A TESTING CONVENIENCE');
-
         bookAddr = bookAddr_;
         book = Book(bookAddr);
-        manatAddr = manatAddr_;
+        manatAddr = payable(0x87b6e03b0D57771940D7cC9E92531B6217364B3E);
     }
 
     //will charge the book's price plus token 'tip' to marketplace
