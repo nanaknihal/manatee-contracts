@@ -1,5 +1,5 @@
 [
-  "constructor(address,address)",
+  "constructor(address)",
   "function bookAddr() view returns (address)",
   "function buy(address,address,uint256,address)",
   "function buy(address,uint256,address)",

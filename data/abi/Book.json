@@ -1,5 +1,4 @@
 [
-  "constructor(string,string,uint256,uint256,address,bool,address)",
   "event Approval(address indexed,address indexed,uint256)",
   "event ERC20PaymentReleased(address indexed,address,uint256)",
   "event OwnershipTransferred(address indexed,address indexed)",
@@ -16,6 +15,8 @@
   "function disableResale()",
   "function enableResale()",
   "function increaseAllowance(address,uint256) returns (bool)",
+  "function initialize(string,string,uint256,uint256,address,bool)",
+  "function initialize(string,string,uint256,address) payable",
   "function name() view returns (string)",
   "function owner() view returns (address)",
   "function paymentToken() view returns (address)",

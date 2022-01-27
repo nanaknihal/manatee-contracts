@@ -2,15 +2,16 @@ pragma solidity ^0.8.0;
 
 import "hardhat/console.sol";
 
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 import "contracts/Provisioner.sol";
 import "contracts/ERC20Dividends.sol";
 // import "contracts/PaymentSplitterOverrideShares.sol";
 // import "@openzeppelin/contracts/finance/PaymentSplitter.sol";
 
-contract Book is ERC20Dividends, Ownable { //PaymentSplitterOverrideShares
+contract Book is Initializable, ERC20Dividends, OwnableUpgradeable { //PaymentSplitterOverrideShares
     string public _name;
     uint public price;
     address public priceToken;
@@ -20,15 +21,18 @@ contract Book is ERC20Dividends, Ownable { //PaymentSplitterOverrideShares
     bool public resaleEnabled;
     Provisioner public provisioner;
 
-    constructor(string memory name_, string memory symbol_, uint supply_, uint price_, address priceToken_, bool resaleEnabled_, address payable manatAddr) ERC20Dividends(name_, symbol_, supply_, priceToken_) Ownable() {
-        _name = name_;
-        price = price_;
-        require((priceToken_ == 0xA02f6adc7926efeBBd59Fd43A84f4E0c0c91e832) || (priceToken_ == 0xd393b1E02dA9831Ff419e22eA105aAe4c47E1253), "only USDC and DAI are allowed in V1");
-        priceToken = priceToken_;
-        resaleEnabled = resaleEnabled_;
-        provisioner = new Provisioner(payable(address(this)), payable(0x87b6e03b0D57771940D7cC9E92531B6217364B3E));
-        _transferOwnership(msg.sender);
-        //throw;//('please test addRentalPeriod and removeRentalPeriod');
+    function initialize(string memory name_, string memory symbol_, uint supply_, uint price_, address priceToken_, bool resaleEnabled_) public initializer {
+      ERC20Dividends.initialize(name_, symbol_, supply_, priceToken_);
+      __Ownable_init();
+
+      _name = name_;
+      price = price_;
+      require((priceToken_ == 0xA02f6adc7926efeBBd59Fd43A84f4E0c0c91e832) || (priceToken_ == 0xd393b1E02dA9831Ff419e22eA105aAe4c47E1253), "only USDC and DAI are allowed in V1");
+      priceToken = priceToken_;
+      resaleEnabled = resaleEnabled_;
+      provisioner = new Provisioner(payable(address(this)));
+      _transferOwnership(msg.sender);
+      //throw;//('please test addRentalPeriod and removeRentalPeriod');
     }
 
     function setPriceToken(address newPriceToken) public onlyOwner {

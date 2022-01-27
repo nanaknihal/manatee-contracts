@@ -1,6 +1,7 @@
 pragma solidity ^0.8.0;
 
 import "hardhat/console.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 import "contracts/Book.sol"; //book interface
@@ -21,7 +22,7 @@ contract Provisioner {
     address payable public manatAddr;
     Book private book;
 
-    constructor(address payable bookAddr_, address payable manatAddr_) {
+    constructor(address payable bookAddr_) {
         bookAddr = bookAddr_;
         book = Book(bookAddr);
         manatAddr = payable(0x87b6e03b0D57771940D7cC9E92531B6217364B3E);

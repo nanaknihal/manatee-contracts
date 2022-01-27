@@ -1,13 +1,14 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/utils/math/Math.sol";
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts/utils/Address.sol";
+// import "@openzeppelin/contracts/utils/Address.sol";
 import "hardhat/console.sol";
 
 
-contract ERC20Dividends is ERC20 {
+contract ERC20Dividends is Initializable, ERC20Upgradeable {
   using Math for uint256;
   event ERC20PaymentReleased(IERC20 indexed token, address to, uint256 amount);
   event PaymentReceived(address from, uint256 amount);
@@ -16,7 +17,8 @@ contract ERC20Dividends is ERC20 {
   uint256 private _totalReleased;
   mapping(address => uint256) private _withheld;
 
-  constructor(string memory name, string memory symbol, uint256 supply_, address paymentToken_) ERC20(name, symbol) public payable {
+  function initialize(string memory name, string memory symbol, uint256 supply_, address paymentToken_) public payable initializer {
+    __ERC20_init(name, symbol);
     paymentToken = IERC20(paymentToken_);
     console.log('totalSupply', totalSupply());
     _mint(msg.sender, supply_ * 10 ** decimals());
