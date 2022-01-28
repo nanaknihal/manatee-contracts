@@ -9,6 +9,8 @@ This is a hardhat environment but many of the files are gitignored and you'll ha
 0x4D39C84712C9A13f4d348050E82A2Eeb45DB5e29
 ### Sample Provisioner (not made with factory) (likely useless)
 0x01ff075517DC7dB43798751f22fEBDDa6EE75b9f
+### Book Factory
+0xC334b3465790bC77299D42635B25D77E3e46A78b
 ### Provisioner Factory
 0x6A78dF871291627C5470F7a768745C3ff05741F2
 
