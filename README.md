@@ -5,7 +5,7 @@ This is a hardhat environment but many of the files are gitignored and you'll ha
 # Important Addresses (Polygon Mumbai)
 ### Manatee token
 0x87b6e03b0D57771940D7cC9E92531B6217364B3E
-### Sample Provisioner (not made with factory) (likely useless)
+### Sample Book (not made with factory) (likely useless)
 0x3497556f7D0bF602D4237Ecb8ae92840D09E4f63
 ### Sample Provisioner (not made with factory) (likely useless)
 0x01ff075517DC7dB43798751f22fEBDDa6EE75b9f
