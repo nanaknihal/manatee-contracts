@@ -1,6 +1,7 @@
 pragma solidity ^0.8.0;
 
 import "hardhat/console.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
@@ -8,7 +9,7 @@ import "contracts/Book.sol"; //book interface
 
 
 // Should be created upon book initialization by the book
-contract Provisioner {
+contract Provisioner is Initializable {
     struct RentalContract {
       uint256 start;
       uint256 expiration;
@@ -22,7 +23,7 @@ contract Provisioner {
     address payable public manatAddr;
     Book private book;
 
-    constructor(address payable bookAddr_) {
+    function initProvisioner(address payable bookAddr_) public initializer {
         bookAddr = bookAddr_;
         book = Book(bookAddr);
         manatAddr = payable(0x87b6e03b0D57771940D7cC9E92531B6217364B3E);

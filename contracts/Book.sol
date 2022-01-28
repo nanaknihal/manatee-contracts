@@ -19,10 +19,12 @@ contract Book is Initializable, ERC20Dividends, OwnableUpgradeable { //PaymentSp
     //string public bookHash; //bookHashes are not used on-chain; they are mostly for quasi-IP purposes are stored as strings to allow choice of the hash algorithm.
     mapping (string => string) public bookVersions; //maps hash of a book to link of its content
     bool public resaleEnabled;
+    address provisionerBeaconProxyFactoryAddress;
     Provisioner public provisioner;
 
-    function initialize(string memory name_, string memory symbol_, uint supply_, uint price_, address priceToken_, bool resaleEnabled_) public initializer {
-      ERC20Dividends.initialize(name_, symbol_, supply_, priceToken_);
+
+    function initBook(string memory name_, string memory symbol_, uint supply_, uint price_, address priceToken_, bool resaleEnabled_) public initializer {
+      ERC20Dividends.initERC20Dividends(name_, symbol_, supply_, priceToken_);
       __Ownable_init();
 
       _name = name_;
@@ -30,7 +32,8 @@ contract Book is Initializable, ERC20Dividends, OwnableUpgradeable { //PaymentSp
       require((priceToken_ == 0xA02f6adc7926efeBBd59Fd43A84f4E0c0c91e832) || (priceToken_ == 0xd393b1E02dA9831Ff419e22eA105aAe4c47E1253), "only USDC and DAI are allowed in V1");
       priceToken = priceToken_;
       resaleEnabled = resaleEnabled_;
-      provisioner = new Provisioner(payable(address(this)));
+      provisioner = Provisioner(payable(0x6A78dF871291627C5470F7a768745C3ff05741F2));
+      // provisioner = new Provisioner(payable(address(this)));
       _transferOwnership(msg.sender);
       //throw;//('please test addRentalPeriod and removeRentalPeriod');
     }

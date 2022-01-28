@@ -1,0 +1,12 @@
+[
+  "constructor(address)",
+  "event OwnershipTransferred(address indexed,address indexed)",
+  "function createBeaconProxy(string,string,uint256,uint256,address,bool) returns (address)",
+  "function mySpawn(uint256) view returns (address)",
+  "function owner() view returns (address)",
+  "function renounceOwnership()",
+  "function transferOwnership(address)",
+  "function upgrade(address)",
+  "function upgradeableBeacon() view returns (address)",
+  "function upgradeableBeaconAddr() view returns (address)"
+]
