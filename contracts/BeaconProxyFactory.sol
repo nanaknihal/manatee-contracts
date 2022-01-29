@@ -10,6 +10,7 @@ import "contracts/Book.sol";
 import "hardhat/console.sol";
 
 contract BeaconProxyFactory is Ownable {
+    event ContentProxyCreated(address indexed creator, address proxy);
     // struct Parameters {
     //     string name;
     //     string symbol;
@@ -33,11 +34,13 @@ contract BeaconProxyFactory is Ownable {
     }
 
     function upgrade(address newLogic) onlyOwner public {
+        console.log("old implementation", upgradeableBeacon.implementation());
         upgradeableBeacon.upgradeTo(newLogic);
+        console.log("new implementation", upgradeableBeacon.implementation());
     }
 
     // string memory name_, string memory symbol_, uint supply_, uint price_, address priceToken_, bool resaleEnabled_
-    function createBeaconProxy(string memory name_, string memory symbol_, uint256 supply_, uint256 price_, address priceToken_, bool resaleEnabled_)
+    function createBeaconProxy(address owner_, string memory name_, string memory symbol_, uint256 supply_, uint256 price_, address priceToken_, bool resaleEnabled_)
         external
         returns (address)
     {
@@ -46,10 +49,11 @@ contract BeaconProxyFactory is Ownable {
         // console.log(asdfasdf);
         BeaconProxy proxy = new BeaconProxy(
            upgradeableBeaconAddr,
-            abi.encodeWithSelector(exampleBook.initBook.selector, name_, symbol_, supply_, price_, priceToken_, resaleEnabled_)
+            abi.encodeWithSelector(exampleBook.initBook.selector, owner_, name_, symbol_, supply_, price_, priceToken_, resaleEnabled_)
         );
         // delete parameters;
         mySpawn.push(address(proxy));
+        emit ContentProxyCreated(msg.sender, address(proxy));
         return address(proxy);
     }
 }

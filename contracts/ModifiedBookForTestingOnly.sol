@@ -11,9 +11,9 @@ import "contracts/ERC20Dividends.sol";
 // import "contracts/PaymentSplitterOverrideShares.sol";
 // import "@openzeppelin/contracts/finance/PaymentSplitter.sol";
 
-contract Book is Initializable, ERC20Dividends, OwnableUpgradeable { //PaymentSplitterOverrideShares
+contract ModifiedBookForTestingOnly is Initializable, ERC20Dividends, OwnableUpgradeable { //PaymentSplitterOverrideShares
     string public _name;
-    uint public price;
+    uint256 public price;
     address public priceToken;
     mapping(uint256 => uint256) public rentalPeriods; //maps number of days to price, e.g. 30 day rental to 15000000 USDC
     //string public bookHash; //bookHashes are not used on-chain; they are mostly for quasi-IP purposes are stored as strings to allow choice of the hash algorithm.
@@ -23,7 +23,7 @@ contract Book is Initializable, ERC20Dividends, OwnableUpgradeable { //PaymentSp
     Provisioner public provisioner;
 
 
-    function initBook(address owner_, string memory name_, string memory symbol_, uint supply_, uint price_, address priceToken_, bool resaleEnabled_) public initializer {
+    function initBook(address owner_, string memory name_, string memory symbol_, uint256 supply_, uint256 price_, address priceToken_, bool resaleEnabled_) public initializer {
       ERC20Dividends.initERC20Dividends(name_, symbol_, supply_, priceToken_);
       __Ownable_init();
 
@@ -43,50 +43,12 @@ contract Book is Initializable, ERC20Dividends, OwnableUpgradeable { //PaymentSp
       priceToken = newPriceToken;
     }
 
-    function setPrice(uint newPrice) public onlyOwner {
+    function setPrice(uint256 newPrice) public onlyOwner {
       price = newPrice;
     }
 
-    function addRentalPeriod(uint256 numDays, uint256 price_) public onlyOwner {
-      require(numDays > 0, "cannot have rentals for 0 days");
-      require(price_ > 0, "cannot have rentals priced at 0");
-      rentalPeriods[numDays] = price_;
+    function weirdPrice() public view returns (uint256) {
+      return price + 1;
     }
-
-    function removeRentalPeriod(uint256 numDays) public onlyOwner {
-      delete rentalPeriods[numDays];
-    }
-
-    // adds or updates a version of the book. versions are indexed by the books hash and point to an external resource (such as on IPFS, Filecoin, Storj, or simple web2)
-    function setBookVersion(string memory bookHash, string memory bookLink) public onlyOwner {
-      bookVersions[bookHash] = bookLink;
-    }
-
-    function removeBookVersion(string memory bookHash) public onlyOwner {
-      delete bookVersions[bookHash];
-    }
-
-    function enableResale() public onlyOwner {
-      resaleEnabled = true;
-    }
-
-    function disableResale() public onlyOwner {
-      resaleEnabled = false;
-    }
-
-    // deprecated
-    // function setBookHash(string memory newBookHash) public onlyOwner {
-    //   bookHash = newBookHash;
-    // }
-
-    // function getShares(address account) public view override returns (uint256) {
-    //     return balanceOf(account);
-    //
-    //   }
-    //
-    // function getTotalShares() public view override returns (uint256) {
-    //     return totalSupply();
-    //   }
-
 
 }
