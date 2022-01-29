@@ -3,57 +3,56 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/proxy/beacon/BeaconProxy.sol";
 import "@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol";
-
 import "contracts/Book.sol";
-
-
+import "contracts/Provisioner.sol";
 import "hardhat/console.sol";
 
 contract BeaconProxyFactory is Ownable {
-    event ContentProxyCreated(address indexed creator, address proxy);
-    // struct Parameters {
-    //     string name;
-    //     string symbol;
-    //     uint supply;
-    //     uint price;
-    //     address priceToken;
-    //     bool resaleEnabled;
-    // }
-
-
-    address public upgradeableBeaconAddr;
-    UpgradeableBeacon public upgradeableBeacon;
+    event BookProxyCreated(address indexed creator, address proxy);
+    event ProvisionerProxyCreated(address indexed creator, address proxy);
+    address public bookUpgradeableBeaconAddr;
+    address public provisionerUpgradeableBeaconAddr;
+    UpgradeableBeacon public bookUpgradeableBeacon;
+    UpgradeableBeacon public provisionerUpgradeableBeacon;
     Book exampleBook;
-    // Parameters public parameters;
-    address[] public mySpawn;
+    Provisioner exampleProvisioner;
+    address[] public books;
 
-    constructor(address _logic) {
-        upgradeableBeacon = new UpgradeableBeacon(_logic);
-        upgradeableBeaconAddr = address(upgradeableBeacon);
+    function getBooks() external view returns (address[] memory) {
+      return books;
+    }
+
+    constructor(address bookLogic, address provisionerLogic) {
+        bookUpgradeableBeacon = new UpgradeableBeacon(bookLogic);
+        provisionerUpgradeableBeacon = new UpgradeableBeacon(provisionerLogic);
+        bookUpgradeableBeaconAddr = address(bookUpgradeableBeacon);
+        provisionerUpgradeableBeaconAddr = address(provisionerUpgradeableBeacon);
         exampleBook = new Book();
+        exampleProvisioner = new Provisioner();
     }
 
-    function upgrade(address newLogic) onlyOwner public {
-        console.log("old implementation", upgradeableBeacon.implementation());
-        upgradeableBeacon.upgradeTo(newLogic);
-        console.log("new implementation", upgradeableBeacon.implementation());
+    function upgradeBook(address newLogic) onlyOwner public {
+        bookUpgradeableBeacon.upgradeTo(newLogic);
     }
 
-    // string memory name_, string memory symbol_, uint supply_, uint price_, address priceToken_, bool resaleEnabled_
-    function createBeaconProxy(address owner_, string memory name_, string memory symbol_, uint256 supply_, uint256 price_, address priceToken_, bool resaleEnabled_)
-        external
-        returns (address)
-    {
-        // parameters = Parameters({name: name_, symbol: symbol_, supply: supply_, price: price_, priceToken: priceToken_, resaleEnabled: resaleEnabled_});
-        // bytes[] memory asdfasdf = abi.encodeWithSelector(exampleBook.initialize.selector, name_, symbol_, supply_, price_, priceToken_, resaleEnabled_);
-        // console.log(asdfasdf);
+    function upgradeProvisioner(address newLogic) onlyOwner public {
+        provisionerUpgradeableBeacon.upgradeTo(newLogic);
+    }
+
+    function createBookBeaconProxy(address owner_, string memory name_, string memory symbol_, uint256 supply_, uint256 price_, address priceToken_, bool resaleEnabled_) external returns (address) {
         BeaconProxy proxy = new BeaconProxy(
-           upgradeableBeaconAddr,
+           bookUpgradeableBeaconAddr,
             abi.encodeWithSelector(exampleBook.initBook.selector, owner_, name_, symbol_, supply_, price_, priceToken_, resaleEnabled_)
         );
-        // delete parameters;
-        mySpawn.push(address(proxy));
-        emit ContentProxyCreated(msg.sender, address(proxy));
+        books.push(address(proxy));
+        emit BookProxyCreated(msg.sender, address(proxy));
+        return address(proxy);
+    }
+
+    function createProvisionerBeaconProxy(address bookAddr_) external returns (address) {
+        BeaconProxy proxy = new BeaconProxy(provisionerUpgradeableBeaconAddr,
+                                            abi.encodeWithSelector(exampleProvisioner.initProvisioner.selector, bookAddr_));
+        emit ProvisionerProxyCreated(msg.sender, address(proxy));
         return address(proxy);
     }
 }

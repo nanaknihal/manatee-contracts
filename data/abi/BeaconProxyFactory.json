@@ -1,13 +1,19 @@
 [
-  "constructor(address)",
-  "event ContentProxyCreated(address indexed,address)",
+  "constructor(address,address)",
+  "event BookProxyCreated(address indexed,address)",
   "event OwnershipTransferred(address indexed,address indexed)",
-  "function createBeaconProxy(address,string,string,uint256,uint256,address,bool) returns (address)",
-  "function mySpawn(uint256) view returns (address)",
+  "event ProvisionerProxyCreated(address indexed,address)",
+  "function bookUpgradeableBeacon() view returns (address)",
+  "function bookUpgradeableBeaconAddr() view returns (address)",
+  "function books(uint256) view returns (address)",
+  "function createBookBeaconProxy(address,string,string,uint256,uint256,address,bool) returns (address)",
+  "function createProvisionerBeaconProxy(address) returns (address)",
+  "function getBooks() view returns (address[])",
   "function owner() view returns (address)",
+  "function provisionerUpgradeableBeacon() view returns (address)",
+  "function provisionerUpgradeableBeaconAddr() view returns (address)",
   "function renounceOwnership()",
   "function transferOwnership(address)",
-  "function upgrade(address)",
-  "function upgradeableBeacon() view returns (address)",
-  "function upgradeableBeaconAddr() view returns (address)"
+  "function upgradeBook(address)",
+  "function upgradeProvisioner(address)"
 ]

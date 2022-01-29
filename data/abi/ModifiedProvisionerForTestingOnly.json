@@ -1,0 +1,8 @@
+[
+  "function bookAddr() view returns (address)",
+  "function getFavoriteAnimal() view returns (string)",
+  "function initProvisioner(address)",
+  "function manatAddr() view returns (address)",
+  "function owners(address) view returns (bool)",
+  "function renters(address) view returns (uint256, uint256)"
+]

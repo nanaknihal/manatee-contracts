@@ -34,6 +34,7 @@ contract Book is Initializable, ERC20Dividends, OwnableUpgradeable { //PaymentSp
       resaleEnabled = resaleEnabled_;
       provisioner = Provisioner(payable(0x6A78dF871291627C5470F7a768745C3ff05741F2));
       // provisioner = new Provisioner(payable(address(this)));
+      // provisioner = BeaconProxyFactory(asddasfasdf).createProvisionerBeaconProxy(address(this));
       _transferOwnership(owner_);
       //throw;//('please test addRentalPeriod and removeRentalPeriod');
     }
