@@ -39,10 +39,10 @@ contract BeaconProxyFactory is Ownable {
         provisionerUpgradeableBeacon.upgradeTo(newLogic);
     }
 
-    function createBookBeaconProxy(address owner_, string memory name_, string memory symbol_, uint256 supply_, uint256 price_, address priceToken_, bool resaleEnabled_) external returns (address) {
+    function createBookBeaconProxy(address owner_, string memory name_, string memory symbol_, uint256 supply_, uint256 price_, address priceToken_, bool resaleEnabled_, string memory category_, string memory description_) external returns (address) {
         BeaconProxy proxy = new BeaconProxy(
            bookUpgradeableBeaconAddr,
-            abi.encodeWithSelector(exampleBook.initBook.selector, owner_, name_, symbol_, supply_, price_, priceToken_, resaleEnabled_)
+            abi.encodeWithSelector(exampleBook.initBook.selector, owner_, name_, symbol_, supply_, price_, priceToken_, resaleEnabled_, category_, description_)
         );
         books.push(address(proxy));
         emit BookProxyCreated(msg.sender, address(proxy));

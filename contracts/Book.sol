@@ -22,8 +22,10 @@ contract Book is Initializable, ERC20Dividends, OwnableUpgradeable { //PaymentSp
     address provisionerBeaconProxyFactoryAddress;
     Provisioner public provisioner;
 
+    string public category;
+    string public description;
 
-    function initBook(address owner_, string memory name_, string memory symbol_, uint supply_, uint price_, address priceToken_, bool resaleEnabled_) public initializer {
+    function initBook(address owner_, string memory name_, string memory symbol_, uint supply_, uint price_, address priceToken_, bool resaleEnabled_, string memory category_, string memory description_) public initializer {
       ERC20Dividends.initERC20Dividends(name_, symbol_, supply_, priceToken_);
       __Ownable_init();
 
@@ -32,6 +34,8 @@ contract Book is Initializable, ERC20Dividends, OwnableUpgradeable { //PaymentSp
       require((priceToken_ == 0xA02f6adc7926efeBBd59Fd43A84f4E0c0c91e832) || (priceToken_ == 0xd393b1E02dA9831Ff419e22eA105aAe4c47E1253), "only USDC and DAI are allowed in V1");
       priceToken = priceToken_;
       resaleEnabled = resaleEnabled_;
+      category = category_;
+      description = description_;
       provisioner = Provisioner(payable(0x6A78dF871291627C5470F7a768745C3ff05741F2));
       // provisioner = new Provisioner(payable(address(this)));
       // provisioner = BeaconProxyFactory(asddasfasdf).createProvisionerBeaconProxy(address(this));
@@ -73,6 +77,14 @@ contract Book is Initializable, ERC20Dividends, OwnableUpgradeable { //PaymentSp
 
     function disableResale() public onlyOwner {
       resaleEnabled = false;
+    }
+
+    function setCategory(string memory newCategory) public onlyOwner {
+      category = newCategory;
+    }
+
+    function setDescription(string memory newDescription) public onlyOwner {
+      description = newDescription;
     }
 
     // deprecated

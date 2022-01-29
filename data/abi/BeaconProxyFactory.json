@@ -6,7 +6,7 @@
   "function bookUpgradeableBeacon() view returns (address)",
   "function bookUpgradeableBeaconAddr() view returns (address)",
   "function books(uint256) view returns (address)",
-  "function createBookBeaconProxy(address,string,string,uint256,uint256,address,bool) returns (address)",
+  "function createBookBeaconProxy(address,string,string,uint256,uint256,address,bool,string,string) returns (address)",
   "function createProvisionerBeaconProxy(address) returns (address)",
   "function getBooks() view returns (address[])",
   "function owner() view returns (address)",
