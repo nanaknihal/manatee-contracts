@@ -24,7 +24,7 @@ contract ModifiedBookForTestingOnly is Initializable, ERC20Dividends, OwnableUpg
 
 
     function initBook(address owner_, string memory name_, string memory symbol_, uint256 supply_, uint256 price_, address priceToken_, bool resaleEnabled_, string memory category_, string memory description_) public initializer {
-      ERC20Dividends.initERC20Dividends(name_, symbol_, supply_, priceToken_);
+      ERC20Dividends.initERC20Dividends(name_, symbol_, supply_, priceToken_, owner_);
       __Ownable_init();
 
       _name = name_;

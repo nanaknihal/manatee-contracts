@@ -18,12 +18,10 @@ contract ERC20Dividends is Initializable, ERC20Upgradeable {
   mapping(address => uint256) private _withheld;
 
   // named initERC20Dividends so contracts which inherit from it don't have selector clash if their initializers are called initialize
-  function initERC20Dividends(string memory name, string memory symbol, uint256 supply_, address paymentToken_) public payable initializer {
+  function initERC20Dividends(string memory name, string memory symbol, uint256 supply_, address paymentToken_, address initialMintTo_) public payable initializer {
     __ERC20_init(name, symbol);
     paymentToken = IERC20(paymentToken_);
-    console.log('totalSupply', totalSupply());
-    _mint(msg.sender, supply_ * 10 ** decimals());
-    console.log('totalSupply', totalSupply());
+    _mint(initialMintTo_, supply_ * 10 ** decimals());
   }
 
 

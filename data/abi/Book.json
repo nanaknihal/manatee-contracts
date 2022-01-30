@@ -18,7 +18,7 @@
   "function enableResale()",
   "function increaseAllowance(address,uint256) returns (bool)",
   "function initBook(address,string,string,uint256,uint256,address,bool,string,string)",
-  "function initERC20Dividends(string,string,uint256,address) payable",
+  "function initERC20Dividends(string,string,uint256,address,address) payable",
   "function name() view returns (string)",
   "function owner() view returns (address)",
   "function paymentToken() view returns (address)",

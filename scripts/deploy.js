@@ -44,6 +44,20 @@ async function main() {
   // const fac1 = await factoryfactory.deploy('0x4D39C84712C9A13f4d348050E82A2Eeb45DB5e29');
   // await fac1.deployed();
   // console.log(fac1.address);
+  const bookFactory = await ethers.getContractFactory('Book');
+  const provisionerFactory = await ethers.getContractFactory('Provisioner');
+  const book = bookFactory.attach('0x1f72018145FE7c05Ff9BBc59becf8F63e384A7Ed');
+  const provisioner = provisionerFactory.attach('0xD006A2B4cDa4a49A5a89650fFF690B261b92B02E');
+  // const provisioner = await provisionerFactory.deploy();
+  const factoryFactory = await ethers.getContractFactory('BeaconProxyFactory');
+  const factory = await factoryFactory.attach('0x8F02dAC5E2FA7ee3f8B40A62e374093A120f90Ae');
+  upgradeBook = await factory.upgradeBook(book.address);
+  console.log(upgradeBook);
+  // const [owner, addr1, addr2] = await ethers.getSigners();
+  // const provider = new ethers.providers.JsonRpcProvider('https://rpc-mumbai.maticvigil.com')
+  // console.log('BOOK: ', await provider.getCode(book.address), 'PROVISIONER: ', await provider.getCode(provisioner.address), 'OWNER: ', await provider.getCode(owner.address));
+  // const factory = await factoryFactory.deploy(book.address, provisioner.address);
+  console.log('FACTORY ADDRESS', factory.address);
 }
 
 main()

@@ -7,7 +7,9 @@ import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 import "contracts/Provisioner.sol";
+import "contracts/BeaconProxyFactory.sol";
 import "contracts/ERC20Dividends.sol";
+
 // import "contracts/PaymentSplitterOverrideShares.sol";
 // import "@openzeppelin/contracts/finance/PaymentSplitter.sol";
 
@@ -26,7 +28,7 @@ contract Book is Initializable, ERC20Dividends, OwnableUpgradeable { //PaymentSp
     string public description;
 
     function initBook(address owner_, string memory name_, string memory symbol_, uint supply_, uint price_, address priceToken_, bool resaleEnabled_, string memory category_, string memory description_) public initializer {
-      ERC20Dividends.initERC20Dividends(name_, symbol_, supply_, priceToken_);
+      ERC20Dividends.initERC20Dividends(name_, symbol_, supply_, priceToken_, owner_);
       __Ownable_init();
 
       _name = name_;
@@ -36,9 +38,10 @@ contract Book is Initializable, ERC20Dividends, OwnableUpgradeable { //PaymentSp
       resaleEnabled = resaleEnabled_;
       category = category_;
       description = description_;
-      provisioner = Provisioner(payable(0x6A78dF871291627C5470F7a768745C3ff05741F2));
+      // provisioner = Provisioner(payable(0x6A78dF871291627C5470F7a768745C3ff05741F2));
       // provisioner = new Provisioner(payable(address(this)));
-      // provisioner = BeaconProxyFactory(asddasfasdf).createProvisionerBeaconProxy(address(this));
+      // create provisioner for this book address from the factory
+      provisioner = Provisioner(BeaconProxyFactory(0x8F02dAC5E2FA7ee3f8B40A62e374093A120f90Ae).createProvisionerBeaconProxy(address(this)));
       _transferOwnership(owner_);
       //throw;//('please test addRentalPeriod and removeRentalPeriod');
     }
