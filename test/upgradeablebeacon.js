@@ -79,7 +79,6 @@ describe('CRU(not D) Books and Provisioners from Upgradeable Beacon Proxy Factor
     this.upgradedProvisionerImplementation = await this.newProvisionerFactory.deploy();
     await this.factory.upgradeProvisioner(this.upgradedProvisionerImplementation.address);
     provisionerProxy1 = await this.newProvisionerFactory.attach(provisionerProxy1.address);
-    console.log(await provisionerProxy1.getFavoriteAnimal());
     expect(await provisionerProxy1.getFavoriteAnimal()).to.equal("manatee");
   });
 });

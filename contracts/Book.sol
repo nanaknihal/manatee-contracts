@@ -19,13 +19,15 @@ contract Book is Initializable, ERC20Dividends, OwnableUpgradeable { //PaymentSp
     address public priceToken;
     mapping(uint256 => uint256) public rentalPeriods; //maps number of days to price, e.g. 30 day rental to 15000000 USDC
     //string public bookHash; //bookHashes are not used on-chain; they are mostly for quasi-IP purposes are stored as strings to allow choice of the hash algorithm.
-    mapping (string => string) public bookVersions; //maps hash of a book to link of its content
+    mapping (string => string) public versions; //maps hash of a book to link of its content
     bool public resaleEnabled;
     address provisionerBeaconProxyFactoryAddress;
     Provisioner public provisioner;
 
     string public category;
     string public description;
+    string[] public versionHashes;
+    string public mostRecentVersion;
 
     function initBook(address owner_, string memory name_, string memory symbol_, uint supply_, uint price_, address priceToken_, bool resaleEnabled_, string memory category_, string memory description_) public initializer {
       ERC20Dividends.initERC20Dividends(name_, symbol_, supply_, priceToken_, owner_);
@@ -66,12 +68,20 @@ contract Book is Initializable, ERC20Dividends, OwnableUpgradeable { //PaymentSp
     }
 
     // adds or updates a version of the book. versions are indexed by the books hash and point to an external resource (such as on IPFS, Filecoin, Storj, or simple web2)
-    function setBookVersion(string memory bookHash, string memory bookLink) public onlyOwner {
-      bookVersions[bookHash] = bookLink;
+    function setVersion(string memory bookHash, string memory bookLink) public onlyOwner {
+      if(bytes(versions[bookHash]).length == 0){
+        versionHashes.push(bookHash);
+      }
+      versions[bookHash] = bookLink;
     }
 
-    function removeBookVersion(string memory bookHash) public onlyOwner {
-      delete bookVersions[bookHash];
+    function removeVersion(string memory bookHash) public onlyOwner {
+      // it's ok if the bookHash still exists in versions; its bookLink will just be empty
+      delete versions[bookHash];
+    }
+
+    function getVersionHashes() public view returns (string[] memory) {
+      return versionHashes;
     }
 
     function enableResale() public onlyOwner {

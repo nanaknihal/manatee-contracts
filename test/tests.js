@@ -32,7 +32,6 @@ const generateBook = async (manatAddr, fromAddr = null) => {
     const bookFrom = fromAddr ? Book.connect(fromAddr) : Book;
     //string memory name_, string memory symbol_, uint supply_, uint price_, address priceToken_, bool resaleEnabled_, address payable manatAddr
     const paymentToken = await generateDAI();
-    console.log('PAYMENT TOKEN SHOULD BE ', paymentToken.address);
     const book = await bookFrom.deploy(owner.address, 'Name of a Book', 'BOOKSYMBOL', 1000000, 15000000, paymentToken.address, false, 'nonfiction', 'this book is a good bok who is about charicters which are friendly');
     await book.deployed();
     return book;
@@ -41,8 +40,8 @@ const generateBook = async (manatAddr, fromAddr = null) => {
 
 
 const generateGenericToken = async (fromAddr = null) => {
-  const GenericTestERC20 = await ethers.getContractFactory('GenericTestERC20');
-  const genericTokenFrom = fromAddr ? GenericTestERC20.connect(fromAddr) : GenericTestERC20;
+  const WeirdTestERC20 = await ethers.getContractFactory('WeirdTestERC20');
+  const genericTokenFrom = fromAddr ? WeirdTestERC20.connect(fromAddr) : WeirdTestERC20;
   const genericToken = await genericTokenFrom.deploy();
   await genericToken.deployed();
   return genericToken;
@@ -51,8 +50,8 @@ const generateGenericToken = async (fromAddr = null) => {
 const generateUSDT = async (fromAddr = null) =>{
   // if testnet is forked, it will just return the USDT from the already-existing address
   if(testnetForked){
-    const GenericTestERC20 = await ethers.getContractFactory('GenericTestERC20');
-    const usdt = await GenericTestERC20.attach('0xa02f6adc7926efebbd59fd43a84f4e0c0c91e832');
+    const WeirdTestERC20 = await ethers.getContractFactory('WeirdTestERC20');
+    const usdt = await WeirdTestERC20.attach('0xa02f6adc7926efebbd59fd43a84f4e0c0c91e832');
     return usdt
   } else {
     return await generateGenericToken();
@@ -63,8 +62,8 @@ const generateUSDT = async (fromAddr = null) =>{
 const generateDAI = async (fromAddr = null) =>{
   // if testnet is forked, it will just return the USDT from the already-existing address
   if(testnetForked){
-    const GenericTestERC20 = await ethers.getContractFactory('GenericTestERC20');
-    const dai = await GenericTestERC20.attach('0xd393b1e02da9831ff419e22ea105aae4c47e1253');
+    const WeirdTestERC20 = await ethers.getContractFactory('WeirdTestERC20');
+    const dai = await WeirdTestERC20.attach('0xd393b1e02da9831ff419e22ea105aae4c47e1253');
     return dai
   } else {
     return await generateGenericToken();
@@ -72,7 +71,7 @@ const generateDAI = async (fromAddr = null) =>{
 
 }
 
-
+const lastElement = (array) => array[array.length - 1]
 
 
 const createProvisionerProxy = async (bookAddr) => {
@@ -111,7 +110,6 @@ describe('Book Initialization', function () {
     //resaleEnabled is false
     const manat = await generateManateeToken();
     const book = await generateBook(manat.address);
-    console.log('total supply', await book.totalSupply());
 
     expect(await book.name()).to.equal('Name of a Book');
     expect(await book.price()).to.equal(15000000);
@@ -156,22 +154,26 @@ describe('Book Updates', function () {
     // expect(await book.bookHash()).to.equal('asdfasdfasdfasfdasdfasd');
 
     it('changing book', async function(){
-      await book.connect(owner).setBookVersion('asdfasdfasdfasfdasdfasd', 'http://www.google.com');
-      expect(await book.bookVersions('asdfasdfasdfasfdasdfasd')).to.equal('http://www.google.com');
+      await book.connect(owner).setVersion('asdfasdfasdfasfdasdfasd', 'http://www.google.com');
+      expect(await book.versions('asdfasdfasdfasfdasdfasd')).to.equal('http://www.google.com');
+      expect(lastElement(await book.getVersionHashes())).to.equal('asdfasdfasdfasfdasdfasd');
 
-      await book.connect(owner).setBookVersion('good hash very randum', 'weird_custom_url_format :)');
-      expect(await book.bookVersions('good hash very randum')).to.equal('weird_custom_url_format :)');
+      await book.connect(owner).setVersion('good hash very randum', 'weird_custom_url_format :)');
+      expect(await book.versions('good hash very randum')).to.equal('weird_custom_url_format :)');
+      expect(lastElement(await book.getVersionHashes())).to.equal('good hash very randum');
 
-      await book.connect(owner).setBookVersion('asdfasdfasdfasfdasdfasd', 'http://www.yahoo.com');
-      expect(await book.bookVersions('asdfasdfasdfasfdasdfasd')).to.equal('http://www.yahoo.com');
+      await book.connect(owner).setVersion('asdfasdfasdfasfdasdfasd', 'http://www.yahoo.com');
+      expect(await book.versions('asdfasdfasdfasfdasdfasd')).to.equal('http://www.yahoo.com');
+      expect(lastElement(await book.getVersionHashes())).to.equal('good hash very randum');
 
-      await book.connect(owner).removeBookVersion('asdfasdfasdfasfdasdfasd');
-      expect(await book.bookVersions('asdfasdfasdfasfdasdfasd')).to.equal('');
+      await book.connect(owner).removeVersion('asdfasdfasdfasfdasdfasd');
+      expect(await book.versions('asdfasdfasdfasfdasdfasd')).to.equal('');
+      expect(lastElement(await book.getVersionHashes())).to.equal('good hash very randum');
 
-      await expect(book.connect(addr2).setBookVersion('asdfasdfasdfasfdasdfasd', 'xzzxczxczxczxvc')).to.be.revertedWith("VM Exception while processing transaction: reverted with reason string 'Ownable: caller is not the owner'")
+      await expect(book.connect(addr2).setVersion('asdfasdfasdfasfdasdfasd', 'xzzxczxczxczxvc')).to.be.revertedWith("VM Exception while processing transaction: reverted with reason string 'Ownable: caller is not the owner'")
 
-      expect(await book.bookVersions('asdfasdfasdfasfdasdfasd')).to.equal('');
-      expect(await book.bookVersions('good hash very randum')).to.equal('weird_custom_url_format :)');
+      expect(await book.versions('asdfasdfasdfasfdasdfasd')).to.equal('');
+      expect(await book.versions('good hash very randum')).to.equal('weird_custom_url_format :)');
   });
 
     it('adding and removing rental periods', async function(){
@@ -314,11 +316,8 @@ for (const bookPrice of [15000000, 0, 1, 10]){
       this.genericToken2 = await generateDAI();
       this.manat = await generateManateeToken();
       this.book = await generateBook(manat.address);
-      console.log('asdf');
       const Provisioner = await ethers.getContractFactory('Provisioner');
-      console.log('asdf1');
       this.provisioner = await Provisioner.attach(await this.book.provisioner())
-      console.log('asdf2');
 
       await this.genericToken.transfer(this.addr2.address, 100000000);
       await this.genericToken.transfer(this.addr3.address, 100000000);
@@ -327,19 +326,13 @@ for (const bookPrice of [15000000, 0, 1, 10]){
       await this.genericToken2.transfer(this.addr3.address, 100000000);
       await this.genericToken2.transfer(this.addr4.address, 100000000);
       await this.genericToken2.transfer(this.addr5.address, 100000000);
-      console.log('asdf3');
       // approve the transactions, then do them
       this.price = await this.book.price();
-      console.log('asdf4');
-      console.log('BOOK PRICE IS ', this.price);
-      console.log('asdf5');
       this.protocolFee = this.price.div(10);
-      console.log('asdf6');
       this.marketplaceFee = this.price.div(20); //give a 5% tip to the marketplace
     });
     // note: if you approve a small amount after a large amount, the small amount stays. so add all approval amounts for a single token into one approve() call.
     it('buying a book with price ' + bookPrice, async function(){
-      console.log('BOOK RICE IS ', this.price);
       await this.genericToken.connect(this.addr2).approve(this.provisioner.address, this.price.add(this.marketplaceFee));
       expect(await this.provisioner.owners(this.addr2.address)).to.equal(false);
       await this.provisioner.connect(this.addr2)['buy(address,uint256,address)'](this.addrMarketplace.address, this.marketplaceFee, await this.book.priceToken());
@@ -481,7 +474,6 @@ for (const bookPrice of [15000000, 0, 1, 10]){
       await this.provisioner.connect(this.addr5).transferRental(this.addr6.address);
       rental = await this.provisioner.renters(this.addr6.address);
       expect(rental.expiration - rental.start).to.be.closeTo(day, 100); //allow 100 seconds
-      console.log('WHY IS THIS NOT RUNNING ')
     });
 
     // await book.connect(owner).enableResale();

@@ -35,7 +35,6 @@ contract ERC20Dividends is Initializable, ERC20Upgradeable {
   }
 
   function _beforeTokenTransfer(address from, address to, uint256 amount) internal override {
-    console.log(from, to, amount);
     //this is not the most gas-efficient, as it is running this if statement for every transfer when it only needs it upon initializating
     //but it's the easiest way to allow _mint() to be called when totalSupply is 0. totalSupply can only be 0 during initialization (as long as it's initialized with some supply) as this contract does not have public burning functions
     //it's a low overhead though
