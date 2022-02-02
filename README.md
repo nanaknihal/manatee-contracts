@@ -13,7 +13,8 @@ This is a hardhat environment but many of the files are gitignored and you'll ha
 0x8F02dAC5E2FA7ee3f8B40A62e374093A120f90Ae
 ### Weird Test Token
 0x9996f37F7DdceCD703c3e35c9dd70cB18DB3CE29
-
+### Weird Test Token 2
+0x5B559791f4a451348435745F3214AFBfa302B05f
 
 
 
