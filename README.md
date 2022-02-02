@@ -11,6 +11,8 @@ This is a hardhat environment but many of the files are gitignored and you'll ha
 0xD006A2B4cDa4a49A5a89650fFF690B261b92B02E
 ### Contract Factory
 0x8F02dAC5E2FA7ee3f8B40A62e374093A120f90Ae
+### Weird Test Token
+0x9996f37F7DdceCD703c3e35c9dd70cB18DB3CE29
 
 
 
