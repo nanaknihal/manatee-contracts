@@ -25,13 +25,13 @@ const generateManateeToken = async (fromAddr = null) =>{
 const generateBook = async (manatAddr, fromAddr = null) => {
   const [owner, addr1, addr2] = await ethers.getSigners();
   if(testnetForked){
-    const paymentToken = await generateDAI();
+    const paymentToken = await generateTestDAI();
     return await createBookProxy(owner.address, 'Name of a Book', 'BOOKSYMBOL', 1000000, 15000000, paymentToken.address, false, 'nonfiction', 'this book is a good bok who is about charicters which are friendly');
   } else {
     const Book = await ethers.getContractFactory('Book');
     const bookFrom = fromAddr ? Book.connect(fromAddr) : Book;
     //string memory name_, string memory symbol_, uint supply_, uint price_, address priceToken_, bool resaleEnabled_, address payable manatAddr
-    const paymentToken = await generateDAI();
+    const paymentToken = await generateTestDAI();
     const book = await bookFrom.deploy(owner.address, 'Name of a Book', 'BOOKSYMBOL', 1000000, 15000000, paymentToken.address, false, 'nonfiction', 'this book is a good bok who is about charicters which are friendly');
     await book.deployed();
     return book;
@@ -39,34 +39,51 @@ const generateBook = async (manatAddr, fromAddr = null) => {
 }
 
 
-const generateGenericToken = async (fromAddr = null) => {
+const generateWeirdTestERC20 = async (fromAddr = null) => {
   const WeirdTestERC20 = await ethers.getContractFactory('WeirdTestERC20');
-  const genericTokenFrom = fromAddr ? WeirdTestERC20.connect(fromAddr) : WeirdTestERC20;
-  const genericToken = await genericTokenFrom.deploy();
-  await genericToken.deployed();
-  return genericToken;
+  const testTokenFrom = fromAddr ? WeirdTestERC20.connect(fromAddr) : WeirdTestERC20;
+  const testToken = await testTokenFrom.deploy();
+  await testToken.deployed();
+  return testToken;
 }
 
-const generateUSDT = async (fromAddr = null) =>{
+// calls unsafeReinitialize, then manually burns the balance of owner, addr1, addr2, etc. except for fromAddr, where the tokens were minted
+const unsafeReinitWeirdERC20 = async (contract, fromAddr=null) => {
+  const signers = await ethers.getSigners();
+  // set fromAddr_ to owner (which is the first signer given by getSigners)
+  fromAddr_ = fromAddr ? fromAddr : signers[0];
+  contract.connect(fromAddr_).unsafeReinitialize();
+
+  for (const signer of signers){
+    let balance = await contract.balanceOf(signer.address)
+    if((signer.address != fromAddr_) && balance){
+      await contract.burnFrom(signer.address, balance);
+    }
+  }
+}
+
+const generateTestUSDT = async (fromAddr = null) => {
   // if testnet is forked, it will just return the USDT from the already-existing address
   if(testnetForked){
     const WeirdTestERC20 = await ethers.getContractFactory('WeirdTestERC20');
-    const usdt = await WeirdTestERC20.attach('0xa02f6adc7926efebbd59fd43a84f4e0c0c91e832');
+    const usdt = await WeirdTestERC20.attach('0x35935060E9160a8815312a2c2586109e8C10AD86');
+    await unsafeReinitWeirdERC20(usdt, fromAddr);
     return usdt
   } else {
-    return await generateGenericToken();
+    return await generateWeirdTestERC20();
   }
 
 }
 
-const generateDAI = async (fromAddr = null) =>{
+const generateTestDAI = async (fromAddr = null) => {
   // if testnet is forked, it will just return the USDT from the already-existing address
   if(testnetForked){
     const WeirdTestERC20 = await ethers.getContractFactory('WeirdTestERC20');
-    const dai = await WeirdTestERC20.attach('0xd393b1e02da9831ff419e22ea105aae4c47e1253');
+    const dai = await WeirdTestERC20.attach('0x07018e3CF542Ac3A97A9b3187DF161450B4E5986');
+    await unsafeReinitWeirdERC20(dai, fromAddr);
     return dai
   } else {
-    return await generateGenericToken();
+    return await generateWeirdTestERC20();
   }
 
 }
@@ -137,12 +154,12 @@ describe('Book Updates', function () {
 
 
 
-    it('changing price Token', async function(){
-      await book.connect(owner).setPriceToken('0xA02f6adc7926efeBBd59Fd43A84f4E0c0c91e832');
-      expect(await book.priceToken()).to.equal('0xA02f6adc7926efeBBd59Fd43A84f4E0c0c91e832');
+    it('changing price token', async function(){
+      await book.connect(owner).setPriceToken('0x35935060E9160a8815312a2c2586109e8C10AD86');
+      expect(await book.priceToken()).to.equal('0x35935060E9160a8815312a2c2586109e8C10AD86');
 
-      await expect(book.connect(addr2).setPriceToken('0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48')).to.be.revertedWith("VM Exception while processing transaction: reverted with reason string 'Ownable: caller is not the owner'")
-      expect(await book.priceToken()).to.equal('0xA02f6adc7926efeBBd59Fd43A84f4E0c0c91e832');
+      await expect(book.connect(addr2).setPriceToken('0x07018e3CF542Ac3A97A9b3187DF161450B4E5986')).to.be.revertedWith("VM Exception while processing transaction: reverted with reason string 'Ownable: caller is not the owner'")
+      expect(await book.priceToken()).to.equal('0x35935060E9160a8815312a2c2586109e8C10AD86');
 
     });
     // console.log('changing hash')
@@ -235,7 +252,7 @@ describe('Book Updates', function () {
 // describe('Royalty shares reflect ERC20 token holders', function () {
 //   it('Ensures PaymentSplitterOverrideShares shares accurately reflect those of ERC20 token holders', async function () {
 //     const [owner, addr1, addr2, addrGarbage] = await ethers.getSigners();
-//     const genericToken = await generateGenericToken();
+//     const testToken = await generateWeirdTestERC20();
 //
 //     //make sure it works for both owner and non-owner
 //     for (const addr of [owner, addr1]) {
@@ -269,26 +286,26 @@ describe('Book Updates', function () {
 //
 //             // move around some tokens and make sure it works
 //
-//             expect(await contract.pendingPaymentToken(addr.address, genericToken.address)).to.equal(0);
+//             expect(await contract.pendingPaymentToken(addr.address, testToken.address)).to.equal(0);
 //
-//             await genericToken.transfer(contract.address, pu('10.0'));
-//             expect(await contract.pendingPaymentToken(addr.address, genericToken.address)).to.equal(pu('10.0'));
+//             await testToken.transfer(contract.address, pu('10.0'));
+//             expect(await contract.pendingPaymentToken(addr.address, testToken.address)).to.equal(pu('10.0'));
 //
-//             await genericToken.transfer(contract.address, pu('25.5'));
-//             expect(await contract.pendingPaymentToken(addr.address, genericToken.address)).to.equal(pu('35.5'));
+//             await testToken.transfer(contract.address, pu('25.5'));
+//             expect(await contract.pendingPaymentToken(addr.address, testToken.address)).to.equal(pu('35.5'));
 //
 //
-//             // console.log('fuck', await contract.pendingPaymentToken(addr.address, genericToken.address), await contract.balanceOf(addr.address));
+//             // console.log('fuck', await contract.pendingPaymentToken(addr.address, testToken.address), await contract.balanceOf(addr.address));
 //             await contract.connect(addr).transfer(addrGarbage.address, (await contract.balanceOf(addr.address)).div(4));
-//             // console.log('fuck1', await contract.pendingPaymentToken(addr.address, genericToken.address), await contract.balanceOf(addr.address));
-//             let pendingPaymentToken = (await contract.pendingPaymentToken(addr.address, genericToken.address));
+//             // console.log('fuck1', await contract.pendingPaymentToken(addr.address, testToken.address), await contract.balanceOf(addr.address));
+//             let pendingPaymentToken = (await contract.pendingPaymentToken(addr.address, testToken.address));
 //             expect(pendingPaymentToken).to.equal(pu('26.625'));
 //
-//             let curTokenBalance = await genericToken.balanceOf(addr.address);
-//             await contract.connect(addr)['release(address,address)'](genericToken.address, addr.address);
+//             let curTokenBalance = await testToken.balanceOf(addr.address);
+//             await contract.connect(addr)['release(address,address)'](testToken.address, addr.address);
 //
-//             expect(await genericToken.balanceOf(addr.address)).to.equal(curTokenBalance.add(pendingPaymentToken));
-//             expect(await contract.pendingPaymentToken(addr.address, genericToken.address)).to.equal(0);
+//             expect(await testToken.balanceOf(addr.address)).to.equal(curTokenBalance.add(pendingPaymentToken));
+//             expect(await contract.pendingPaymentToken(addr.address, testToken.address)).to.equal(0);
 //
 //             await expect(contract.connect(addr)['release(address)'](addr.address)).to.be.revertedWith("VM Exception while processing transaction: reverted with reason string 'PaymentSplitter: account is not due payment'");
 //       }
@@ -297,8 +314,8 @@ describe('Book Updates', function () {
 // })
 
 // let [owner, addr1, addr2, addr3, addr4, addr5, addr6, addrMarketplace] = [null, null, null, null, null, null, null, null];
-// let genericToken = null;
-// let genericToken2 = null;
+// let testToken = null;
+// let testToken2 = null;
 // let manat = null;
 // let book = null;
 // let provisioner = null;
@@ -312,20 +329,21 @@ for (const bookPrice of [15000000, 0, 1, 10]){
     before(async function(){
       [this.owner, this.addr1, this.addr2, this.addr3, this.addr4, this.addr5, this.addr6, this.addrMarketplace] = await ethers.getSigners();
 
-      this.genericToken = await generateUSDT();
-      this.genericToken2 = await generateDAI();
+      this.testToken = await generateTestUSDT();
+      this.testToken2 = await generateTestDAI();
       this.manat = await generateManateeToken();
       this.book = await generateBook(manat.address);
       const Provisioner = await ethers.getContractFactory('Provisioner');
       this.provisioner = await Provisioner.attach(await this.book.provisioner())
 
-      await this.genericToken.transfer(this.addr2.address, 100000000);
-      await this.genericToken.transfer(this.addr3.address, 100000000);
-      await this.genericToken.transfer(this.addr4.address, 100000000);
-      await this.genericToken.transfer(this.addr5.address, 100000000);
-      await this.genericToken2.transfer(this.addr3.address, 100000000);
-      await this.genericToken2.transfer(this.addr4.address, 100000000);
-      await this.genericToken2.transfer(this.addr5.address, 100000000);
+      // console.log('Balances: ' await this.testToken.transfer(this.addr2.address)
+      await this.testToken.transfer(this.addr2.address, 100000000);
+      await this.testToken.transfer(this.addr3.address, 100000000);
+      await this.testToken.transfer(this.addr4.address, 100000000);
+      await this.testToken.transfer(this.addr5.address, 100000000);
+      await this.testToken2.transfer(this.addr3.address, 100000000);
+      await this.testToken2.transfer(this.addr4.address, 100000000);
+      await this.testToken2.transfer(this.addr5.address, 100000000);
       // approve the transactions, then do them
       this.price = await this.book.price();
       this.protocolFee = this.price.div(10);
@@ -333,7 +351,7 @@ for (const bookPrice of [15000000, 0, 1, 10]){
     });
     // note: if you approve a small amount after a large amount, the small amount stays. so add all approval amounts for a single token into one approve() call.
     it('buying a book with price ' + bookPrice, async function(){
-      await this.genericToken.connect(this.addr2).approve(this.provisioner.address, this.price.add(this.marketplaceFee));
+      await this.testToken.connect(this.addr2).approve(this.provisioner.address, this.price.add(this.marketplaceFee));
       expect(await this.provisioner.owners(this.addr2.address)).to.equal(false);
       await this.provisioner.connect(this.addr2)['buy(address,uint256,address)'](this.addrMarketplace.address, this.marketplaceFee, await this.book.priceToken());
       expect(await this.provisioner.owners(this.addr2.address)).to.equal(true);
@@ -341,53 +359,53 @@ for (const bookPrice of [15000000, 0, 1, 10]){
 
 
     it('ensure buying fails if the user already owns a book, for book price ' + bookPrice, async function(){
-      await this.genericToken.connect(this.addr2).approve(this.provisioner.address, this.price.add(this.marketplaceFee));
+      await this.testToken.connect(this.addr2).approve(this.provisioner.address, this.price.add(this.marketplaceFee));
       await expect(this.provisioner.connect(this.addr2)['buy(address,uint256,address)'](this.addrMarketplace.address, this.marketplaceFee, await this.book.priceToken())).to.be.revertedWith("VM Exception while processing transaction: reverted with reason string 'recipient already owns a copy'");
     });
 
     //
     it('ensure buying the book fails if any smaller price is paid, with book price ' + bookPrice, async function(){
     if (this.price > 0) { //can't work for 0 test case because then price would be negative:
-      await this.genericToken.connect(owner).approve(this.provisioner.address, this.price.add(this.marketplaceFee).sub(1));
+      await this.testToken.connect(owner).approve(this.provisioner.address, this.price.add(this.marketplaceFee).sub(1));
       await expect(this.provisioner.connect(owner)['buy(address,uint256,address)'](this.addrMarketplace.address, this.marketplaceFee, await this.book.priceToken())).to.be.revertedWith("VM Exception while processing transaction: reverted with reason string 'ERC20: transfer amount exceeds allowance'");
     }});
     //
     it('ensure the amount charged is exactly what it should be, with book price ' + bookPrice, async function(){
-      await this.genericToken.connect(owner).approve(this.provisioner.address, this.price.add(this.marketplaceFee).add(1));
+      await this.testToken.connect(owner).approve(this.provisioner.address, this.price.add(this.marketplaceFee).add(1));
       await this.provisioner.connect(owner)['buy(address,uint256,address)'](this.addrMarketplace.address, this.marketplaceFee, await this.book.priceToken());
-      expect(await this.genericToken.allowance(owner.address, this.provisioner.address)).to.equal(1);
+      expect(await this.testToken.allowance(owner.address, this.provisioner.address)).to.equal(1);
     });
 
     it('ensure gifting a book to addr1 works (could be more comprehensive but this is unlikely to be a problem, with book price ' + bookPrice, async function(){
       expect(await this.provisioner.owners(this.addr1.address)).to.equal(false);
-      await this.provisioner.connect(this.addr2)['buy(address,address,uint256,address)'](this.addr1.address, this.addrMarketplace.address, this.marketplaceFee, this.genericToken.address);
+      await this.provisioner.connect(this.addr2)['buy(address,address,uint256,address)'](this.addr1.address, this.addrMarketplace.address, this.marketplaceFee, this.testToken.address);
       expect(await this.provisioner.owners(this.addr1.address)).to.equal(true);
       // try again and make sure it fails because the recipient owns it
-      await expect(this.provisioner.connect(this.addr2)['buy(address,address,uint256,address)'](this.addr1.address, this.addrMarketplace.address, this.marketplaceFee, this.genericToken.address)).to.be.revertedWith("VM Exception while processing transaction: reverted with reason string 'recipient already owns a copy'");
+      await expect(this.provisioner.connect(this.addr2)['buy(address,address,uint256,address)'](this.addr1.address, this.addrMarketplace.address, this.marketplaceFee, this.testToken.address)).to.be.revertedWith("VM Exception while processing transaction: reverted with reason string 'recipient already owns a copy'");
     });
 
     it('ensure paying the provisioner and exchange in different Tokens works, with book price ' + bookPrice, async function(){
       this.marketplaceFee = 1000000
-      await this.genericToken.connect(this.addr3).approve(this.provisioner.address, this.price);
-      await this.genericToken2.connect(this.addr3).approve(this.provisioner.address, this.marketplaceFee);
+      await this.testToken.connect(this.addr3).approve(this.provisioner.address, this.price);
+      await this.testToken2.connect(this.addr3).approve(this.provisioner.address, this.marketplaceFee);
       expect(await this.provisioner.owners(this.addr3.address)).to.equal(false);
-      await this.provisioner.connect(this.addr3)['buy(address,uint256,address)'](this.addrMarketplace.address, this.marketplaceFee, this.genericToken2.address);
+      await this.provisioner.connect(this.addr3)['buy(address,uint256,address)'](this.addrMarketplace.address, this.marketplaceFee, this.testToken2.address);
       expect(await this.provisioner.owners(this.addr3.address)).to.equal(true);
       // and does not overcharge
-      await this.genericToken.connect(this.addr4).approve(this.provisioner.address, this.price.add(1));
-      await this.genericToken2.connect(this.addr4).approve(this.provisioner.address, this.marketplaceFee + 1);
-      await this.provisioner.connect(this.addr4)['buy(address,uint256,address)'](this.addrMarketplace.address, this.marketplaceFee, this.genericToken2.address);
-      expect(await this.genericToken.allowance(this.addr4.address, this.provisioner.address)).to.equal(1);
-      expect(await this.genericToken2.allowance(this.addr4.address, this.provisioner.address)).to.equal(1);
+      await this.testToken.connect(this.addr4).approve(this.provisioner.address, this.price.add(1));
+      await this.testToken2.connect(this.addr4).approve(this.provisioner.address, this.marketplaceFee + 1);
+      await this.provisioner.connect(this.addr4)['buy(address,uint256,address)'](this.addrMarketplace.address, this.marketplaceFee, this.testToken2.address);
+      expect(await this.testToken.allowance(this.addr4.address, this.provisioner.address)).to.equal(1);
+      expect(await this.testToken2.allowance(this.addr4.address, this.provisioner.address)).to.equal(1);
       // and fails if too little is allowed in the book's Token
       if (this.price > 0) {//can't work for 0 test case because then price would be negative:
-        await this.genericToken.connect(this.addr5).approve(this.provisioner.address, this.price.sub(1));
-        await this.genericToken2.connect(this.addr5).approve(this.provisioner.address, this.marketplaceFee);
-        await expect(this.provisioner.connect(this.addr5)['buy(address,uint256,address)'](this.addrMarketplace.address, this.marketplaceFee, this.genericToken2.address)).to.be.revertedWith("VM Exception while processing transaction: reverted with reason string 'ERC20: transfer amount exceeds allowance'");
+        await this.testToken.connect(this.addr5).approve(this.provisioner.address, this.price.sub(1));
+        await this.testToken2.connect(this.addr5).approve(this.provisioner.address, this.marketplaceFee);
+        await expect(this.provisioner.connect(this.addr5)['buy(address,uint256,address)'](this.addrMarketplace.address, this.marketplaceFee, this.testToken2.address)).to.be.revertedWith("VM Exception while processing transaction: reverted with reason string 'ERC20: transfer amount exceeds allowance'");
         // or in the exhange Token
-        await this.genericToken.connect(this.addr5).approve(this.provisioner.address, this.price);
-        await this.genericToken2.connect(this.addr5).approve(this.provisioner.address, this.marketplaceFee - 1);
-        await expect(this.provisioner.connect(this.addr5)['buy(address,uint256,address)'](this.addrMarketplace.address, this.marketplaceFee, this.genericToken2.address)).to.be.revertedWith("VM Exception while processing transaction: reverted with reason string 'ERC20: transfer amount exceeds allowance'");
+        await this.testToken.connect(this.addr5).approve(this.provisioner.address, this.price);
+        await this.testToken2.connect(this.addr5).approve(this.provisioner.address, this.marketplaceFee - 1);
+        await expect(this.provisioner.connect(this.addr5)['buy(address,uint256,address)'](this.addrMarketplace.address, this.marketplaceFee, this.testToken2.address)).to.be.revertedWith("VM Exception while processing transaction: reverted with reason string 'ERC20: transfer amount exceeds allowance'");
       }
     });
 
@@ -415,8 +433,8 @@ for (const bookPrice of [15000000, 0, 1, 10]){
     });
 
     it('rental period ends at the right time and re-renting it extends it by the appropriate amount, with book price ' + bookPrice, async function(){
-      await this.genericToken.connect(this.addr5).approve(this.provisioner.address, 1000000000);
-      await this.genericToken2.connect(this.addr5).approve(this.provisioner.address, 1000000000);
+      await this.testToken.connect(this.addr5).approve(this.provisioner.address, 1000000000);
+      await this.testToken2.connect(this.addr5).approve(this.provisioner.address, 1000000000);
       await this.provisioner.connect(this.addr5).rent(30, this.addrMarketplace.address, this.marketplaceFee, await this.book.priceToken());
       var rental = await this.provisioner.renters(this.addr5.address);
       expect(rental.start).to.equal(rental.expiration.sub(30*day, this.addrMarketplace.address, this.marketplaceFee, await this.book.priceToken()));

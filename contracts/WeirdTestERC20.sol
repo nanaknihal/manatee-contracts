@@ -18,14 +18,23 @@ contract WeirdTestERC20 is ERC20 {
     }
     // anyone can mint :)
     function mintTo(address recipient, uint amount) public {
-      customTotalSupply = amount;
+      customTotalSupply += amount;
       _mint(recipient, amount);
     }
-    function burnFrom(address loser, uint amount) public{
-      customTotalSupply -= amount;
+
+    function burnFrom(address loser, uint amount) public {
+      if(customTotalSupply >= amount){
+        customTotalSupply -= amount;
+      // if this else happens, something is weird. but this whole contract is just for weird testing and very flawed:
+      } else {
+        customTotalSupply = 0;
+      }
       _burn(loser, amount);
     }
     function totalSupply() public override view returns (uint) {
       return customTotalSupply;
+    }
+    function setTotalSupply(uint newTotalSupply) public {
+      customTotalSupply = newTotalSupply;
     }
 }

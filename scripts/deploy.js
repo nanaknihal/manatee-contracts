@@ -8,6 +8,14 @@ const generateGenericToken = async (fromAddr = null) => {
   return genericToken;
 }
 
+const generateWeirdTestERC20 = async (fromAddr = null) => {
+  const WeirdTestERC20 = await ethers.getContractFactory('WeirdTestERC20');
+  const genericTokenFrom = fromAddr ? WeirdTestERC20.connect(fromAddr) : WeirdTestERC20;
+  const genericToken = await genericTokenFrom.deploy();
+  await genericToken.deployed();
+  return genericToken;
+}
+
 const generateManateeToken = async (fromAddr = null) =>{
   const ManateeToken = await ethers.getContractFactory('ManateeToken');
   const manaTFrom = fromAddr ? ManateeToken.connect(fromAddr) : ManateeToken;
@@ -28,13 +36,12 @@ const generateBook = async (manatAddr, fromAddr = null) => {
 }
 
 async function main() {
-  // const book = await generateBook();
   // const manateeToken = await generateManateeToken();
   // console.log('Manatee Token deployed to:', manateeToken.address);
   // const [fac1, fac2] =
-  // const Book = await ethers.getContractFactory('Book');
-  // book = await Book.deploy();
-  // await book.deployed();
+  const Book = await ethers.getContractFactory('Book');
+  const book = await Book.deploy();
+  await book.deployed();
   // console.log(book.address);
   // // const Provisioner = await ethers.getContractFactory('BeaconProxyFactory');
   // // provisioner = await Provisioner.deploy(ethers.constants.AddressZero);
@@ -46,18 +53,24 @@ async function main() {
   // // console.log(fac1.address);
   // const bookFactory = await ethers.getContractFactory('Book');
   // const provisionerFactory = await ethers.getContractFactory('Provisioner');
-  // const book = bookFactory.attach('0xA65F60eFFdc7abb78dA6A3c1B9d19493dE9e8E6a');
+  // const book = bookFactory.attach('0xa8D1419Fd748dAB80BA3E4E13bc98395D967B8b1');
   // const provisioner = provisionerFactory.attach('0xD006A2B4cDa4a49A5a89650fFF690B261b92B02E');
   // // const provisioner = await provisionerFactory.deploy();
-  // const factoryFactory = await ethers.getContractFactory('BeaconProxyFactory');
-  // const factory = await factoryFactory.attach('0x8F02dAC5E2FA7ee3f8B40A62e374093A120f90Ae');
-  // upgradeBook = await factory.upgradeBook(book.address);
-  // console.log(upgradeBook);
+  const factoryFactory = await ethers.getContractFactory('BeaconProxyFactory');
+  const factory = await factoryFactory.attach('0x8F02dAC5E2FA7ee3f8B40A62e374093A120f90Ae');
+  const upgradeBook = await factory.upgradeBook(book.address);
+  console.log(upgradeBook);
   // // const [owner, addr1, addr2] = await ethers.getSigners();
   // // const provider = new ethers.providers.JsonRpcProvider('https://rpc-mumbai.maticvigil.com')
   // // console.log('BOOK: ', await provider.getCode(book.address), 'PROVISIONER: ', await provider.getCode(provisioner.address), 'OWNER: ', await provider.getCode(owner.address));
   // // const factory = await factoryFactory.deploy(book.address, provisioner.address);
+
+
+
+
+
   // console.log('FACTORY ADDRESS', factory.address);
+  // console.log((await generateWeirdTestERC20()).address, (await generateWeirdTestERC20()).address);
 }
 
 main()

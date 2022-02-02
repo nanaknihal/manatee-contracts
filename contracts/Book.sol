@@ -35,7 +35,7 @@ contract Book is Initializable, ERC20Dividends, OwnableUpgradeable { //PaymentSp
 
       _name = name_;
       price = price_;
-      require((priceToken_ == 0xA02f6adc7926efeBBd59Fd43A84f4E0c0c91e832) || (priceToken_ == 0xd393b1E02dA9831Ff419e22eA105aAe4c47E1253), "only USDC and DAI are allowed in V1");
+      require((priceToken_ == 0x35935060E9160a8815312a2c2586109e8C10AD86) || (priceToken_ == 0x07018e3CF542Ac3A97A9b3187DF161450B4E5986), "only USDC and DAI are allowed in V1");
       priceToken = priceToken_;
       resaleEnabled = resaleEnabled_;
       category = category_;
@@ -49,7 +49,7 @@ contract Book is Initializable, ERC20Dividends, OwnableUpgradeable { //PaymentSp
     }
 
     function setPriceToken(address newPriceToken) public onlyOwner {
-      require((newPriceToken == 0xA02f6adc7926efeBBd59Fd43A84f4E0c0c91e832) || (newPriceToken == 0xd393b1E02dA9831Ff419e22eA105aAe4c47E1253), "only USDC and DAI are allowed in V1");
+      require((newPriceToken == 0x35935060E9160a8815312a2c2586109e8C10AD86) || (newPriceToken == 0x07018e3CF542Ac3A97A9b3187DF161450B4E5986), "only USDC and DAI are allowed in V1");
       priceToken = newPriceToken;
     }
 

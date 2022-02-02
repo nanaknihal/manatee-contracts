@@ -11,6 +11,7 @@
   "function increaseAllowance(address,uint256) returns (bool)",
   "function mintTo(address,uint256)",
   "function name() view returns (string)",
+  "function setTotalSupply(uint256)",
   "function symbol() view returns (string)",
   "function totalSupply() view returns (uint256)",
   "function transfer(address,uint256) returns (bool)",
