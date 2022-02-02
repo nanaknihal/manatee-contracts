@@ -6,7 +6,7 @@ This is a hardhat environment but many of the files are gitignored and you'll ha
 ### Manatee token
 0x87b6e03b0D57771940D7cC9E92531B6217364B3E
 ### Sample Book (not made with factory) (likely useless)
-0xA65F60eFFdc7abb78dA6A3c1B9d19493dE9e8E6a
+0xa8D1419Fd748dAB80BA3E4E13bc98395D967B8b1
 ### Sample Provisioner (not made with factory) (likely useless)
 0xD006A2B4cDa4a49A5a89650fFF690B261b92B02E
 ### Contract Factory
