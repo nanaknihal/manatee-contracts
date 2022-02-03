@@ -56,8 +56,7 @@ contract Provisioner is Initializable {
     function _processPayment(uint256 price, address marketplaceAddr, uint256 marketplaceTip, address marketplaceTipToken) private   returns (bool) {
       IERC20 priceToken_ = IERC20(book.priceToken());
       IERC20 tipToken_ = IERC20(marketplaceTipToken);
-      uint256 fee = book.price() / 10; //book.price() / manateeToken.feeDivisor();
-
+      uint256 fee = price / 10; //book.price() / manateeToken.feeDivisor();
       require(priceToken_.transferFrom(msg.sender, bookAddr, price - fee), "Need to pay enough for book");
       require(priceToken_.transferFrom(msg.sender, manatAddr, fee), "Need to pay enough for book");
       require(tipToken_.transferFrom(msg.sender, marketplaceAddr, marketplaceTip), "Need to pay enough to marketplace");

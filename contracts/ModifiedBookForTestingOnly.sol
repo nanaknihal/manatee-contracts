@@ -29,7 +29,7 @@ contract ModifiedBookForTestingOnly is Initializable, ERC20Dividends, OwnableUpg
 
       _name = name_;
       price = price_;
-      require((priceToken_ == 0xA02f6adc7926efeBBd59Fd43A84f4E0c0c91e832) || (priceToken_ == 0xd393b1E02dA9831Ff419e22eA105aAe4c47E1253), "only USDC and DAI are allowed in V1");
+      require((priceToken_ == 0x07018e3CF542Ac3A97A9b3187DF161450B4E5986) || (priceToken_ == 0x35935060E9160a8815312a2c2586109e8C10AD86), "only USDC and DAI are allowed in V1");
       priceToken = priceToken_;
       resaleEnabled = resaleEnabled_;
       provisioner = Provisioner(payable(0x6A78dF871291627C5470F7a768745C3ff05741F2));
@@ -39,7 +39,7 @@ contract ModifiedBookForTestingOnly is Initializable, ERC20Dividends, OwnableUpg
     }
 
     function setPriceToken(address newPriceToken) public onlyOwner {
-      require((newPriceToken == 0xA02f6adc7926efeBBd59Fd43A84f4E0c0c91e832) || (newPriceToken == 0xd393b1E02dA9831Ff419e22eA105aAe4c47E1253), "only USDC and DAI are allowed in V1");
+      require((newPriceToken == 0x07018e3CF542Ac3A97A9b3187DF161450B4E5986) || (newPriceToken == 0x35935060E9160a8815312a2c2586109e8C10AD86), "only USDC and DAI are allowed in V1");
       priceToken = newPriceToken;
     }
 

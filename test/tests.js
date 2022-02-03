@@ -48,15 +48,15 @@ const generateWeirdTestERC20 = async (fromAddr = null) => {
 }
 
 // calls unsafeReinitialize, then manually burns the balance of owner, addr1, addr2, etc. except for fromAddr, where the tokens were minted
-const unsafeReinitWeirdERC20 = async (contract, fromAddr=null) => {
+const unsafeReinitWeirdERC20 = async (contract, fromSigner=null) => {
   const signers = await ethers.getSigners();
   // set fromAddr_ to owner (which is the first signer given by getSigners)
-  fromAddr_ = fromAddr ? fromAddr : signers[0];
-  contract.connect(fromAddr_).unsafeReinitialize();
+  const fromSigner_ = fromSigner ? fromSigner : signers[0];
+  await contract.connect(fromSigner_).unsafeReinitialize();
 
   for (const signer of signers){
     let balance = await contract.balanceOf(signer.address)
-    if((signer.address != fromAddr_) && balance){
+    if((signer.address !== fromSigner_.address) && balance){
       await contract.burnFrom(signer.address, balance);
     }
   }
@@ -329,14 +329,12 @@ for (const bookPrice of [15000000, 0, 1, 10]){
     before(async function(){
       [this.owner, this.addr1, this.addr2, this.addr3, this.addr4, this.addr5, this.addr6, this.addrMarketplace] = await ethers.getSigners();
 
-      this.testToken = await generateTestUSDT();
-      this.testToken2 = await generateTestDAI();
+      this.testToken = await generateTestDAI();
+      this.testToken2 = await generateTestUSDT();
       this.manat = await generateManateeToken();
       this.book = await generateBook(manat.address);
       const Provisioner = await ethers.getContractFactory('Provisioner');
       this.provisioner = await Provisioner.attach(await this.book.provisioner())
-
-      // console.log('Balances: ' await this.testToken.transfer(this.addr2.address)
       await this.testToken.transfer(this.addr2.address, 100000000);
       await this.testToken.transfer(this.addr3.address, 100000000);
       await this.testToken.transfer(this.addr4.address, 100000000);
@@ -438,10 +436,8 @@ for (const bookPrice of [15000000, 0, 1, 10]){
       await this.provisioner.connect(this.addr5).rent(30, this.addrMarketplace.address, this.marketplaceFee, await this.book.priceToken());
       var rental = await this.provisioner.renters(this.addr5.address);
       expect(rental.start).to.equal(rental.expiration.sub(30*day, this.addrMarketplace.address, this.marketplaceFee, await this.book.priceToken()));
-
       const originalRentalStart = rental.start;
       await this.provisioner.connect(this.addr5).rent(30, this.addrMarketplace.address, this.marketplaceFee, await this.book.priceToken());
-
       rental = await this.provisioner.renters(this.addr5.address);
       expect(rental.expiration).to.equal(originalRentalStart.add(60*day));
       // even if time changes before renting again (as long as the time has not gone beyond the current rental period)
@@ -458,12 +454,11 @@ for (const bookPrice of [15000000, 0, 1, 10]){
       await this.provisioner.connect(this.addr5).rent(30, this.addrMarketplace.address, this.marketplaceFee, await this.book.priceToken());
       rental = await this.provisioner.renters(this.addr5.address);
       expect(rental.expiration).to.equal(rental.start.add(30*day, this.addrMarketplace.address, this.marketplaceFee, await this.book.priceToken()));
-
       // try with a different time period:
       if (bookPrice == 0){
         await expect(this.book.connect(owner).addRentalPeriod(15, bookPrice)).to.be.revertedWith("VM Exception while processing transaction: reverted with reason string 'cannot have rentals priced at 0'");
       } else{
-        await this.book.connect(owner).addRentalPeriod(15, bookPrice); //bookPrice is parametized and should be set to 0 sometimes too to make sure it works with price of 0
+        await this.book.connect(owner).addRentalPeriod(15, bookPrice);
         await this.provisioner.connect(this.addr5).rent(15, this.addrMarketplace.address, this.marketplaceFee, await this.book.priceToken());
         rental = await this.provisioner.renters(this.addr5.address);
         expect(rental.expiration).to.equal(rental.start.add(45*day));

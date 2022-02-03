@@ -60,6 +60,7 @@ contract Book is Initializable, ERC20Dividends, OwnableUpgradeable { //PaymentSp
     function addRentalPeriod(uint256 numDays, uint256 price_) public onlyOwner {
       require(numDays > 0, "cannot have rentals for 0 days");
       require(price_ > 0, "cannot have rentals priced at 0");
+      console.log(rentalPeriods[numDays]);
       rentalPeriods[numDays] = price_;
     }
 
