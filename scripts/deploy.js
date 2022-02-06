@@ -39,9 +39,9 @@ async function main() {
   // const manateeToken = await generateManateeToken();
   // console.log('Manatee Token deployed to:', manateeToken.address);
   // const [fac1, fac2] =
-  const Book = await ethers.getContractFactory('Book');
-  const book = await Book.deploy();
-  await book.deployed();
+  // const Book = await ethers.getContractFactory('Book');
+  // const book = await Book.deploy();
+  // await book.deployed();
   const Provisioner = await ethers.getContractFactory('Provisioner');
   const provisioner = await Provisioner.deploy();
   await provisioner.deployed();
@@ -57,7 +57,7 @@ async function main() {
   // // const provisioner = await provisionerFactory.deploy();
   const factoryFactory = await ethers.getContractFactory('BeaconProxyFactory');
   const factory = await factoryFactory.attach('0x8F02dAC5E2FA7ee3f8B40A62e374093A120f90Ae');
-  const upgradeBook = await factory.upgradeBook(book.address);
+  // const upgradeBook = await factory.upgradeBook(book.address);
   const upgradeProvisioner = await factory.upgradeProvisioner(provisioner.address);
   // console.log(upgradeProvisioner);
   // const upgradeBook = await factory.upgradeBook(book.address);

@@ -351,8 +351,10 @@ for (const bookPrice of [15000000, 0, 1, 10]){
     it('buying a book with price ' + bookPrice, async function(){
       await this.testToken.connect(this.addr2).approve(this.provisioner.address, this.price.add(this.marketplaceFee));
       expect(await this.provisioner.owners(this.addr2.address)).to.equal(false);
+      expect(await this.provisioner.hasAccess(this.addr2.address)).to.equal(false);
       await this.provisioner.connect(this.addr2)['buy(address,uint256,address)'](this.addrMarketplace.address, this.marketplaceFee, await this.book.priceToken());
       expect(await this.provisioner.owners(this.addr2.address)).to.equal(true);
+      expect(await this.provisioner.hasAccess(this.addr2.address)).to.equal(true);
     });
 
 
@@ -376,8 +378,10 @@ for (const bookPrice of [15000000, 0, 1, 10]){
 
     it('ensure gifting a book to addr1 works (could be more comprehensive but this is unlikely to be a problem, with book price ' + bookPrice, async function(){
       expect(await this.provisioner.owners(this.addr1.address)).to.equal(false);
+      expect(await this.provisioner.hasAccess(this.addr1.address)).to.equal(false);
       await this.provisioner.connect(this.addr2)['buy(address,address,uint256,address)'](this.addr1.address, this.addrMarketplace.address, this.marketplaceFee, this.testToken.address);
       expect(await this.provisioner.owners(this.addr1.address)).to.equal(true);
+      expect(await this.provisioner.hasAccess(this.addr1.address)).to.equal(true);
       // try again and make sure it fails because the recipient owns it
       await expect(this.provisioner.connect(this.addr2)['buy(address,address,uint256,address)'](this.addr1.address, this.addrMarketplace.address, this.marketplaceFee, this.testToken.address)).to.be.revertedWith("VM Exception while processing transaction: reverted with reason string 'recipient already owns a copy'");
     });
@@ -413,12 +417,16 @@ for (const bookPrice of [15000000, 0, 1, 10]){
       await this.book.connect(owner).enableResale();
       await this.provisioner.connect(this.addr2).transferPurchase(this.addr6.address);
       expect(await this.provisioner.owners(this.addr2.address)).to.equal(false);
+      expect(await this.provisioner.hasAccess(this.addr2.address)).to.equal(false);
       expect(await this.provisioner.owners(this.addr6.address)).to.equal(true);
+      expect(await this.provisioner.hasAccess(this.addr6.address)).to.equal(true);
       await expect(this.provisioner.connect(this.addr1).transferPurchase(this.addr6.address)).to.be.revertedWith("VM Exception while processing transaction: reverted with reason string 'cannot transfer to a recipient who already owns the book'");
       await expect(this.provisioner.connect(this.addr2).transferPurchase(this.addr6.address)).to.be.revertedWith("VM Exception while processing transaction: reverted with reason string 'you must own the book before transferring your ownership'");
       await this.provisioner.connect(this.addr6).transferPurchase(this.addr2.address);
       expect(await this.provisioner.owners(this.addr2.address)).to.equal(true);
+      expect(await this.provisioner.hasAccess(this.addr2.address)).to.equal(true);
       expect(await this.provisioner.owners(this.addr6.address)).to.equal(false);
+      expect(await this.provisioner.hasAccess(this.addr6.address)).to.equal(false);
     });
 
     it('you can\'t rent a book if you own it, with book price ' + bookPrice, async function(){
@@ -434,8 +442,10 @@ for (const bookPrice of [15000000, 0, 1, 10]){
       await this.testToken.connect(this.addr5).approve(this.provisioner.address, 1000000000);
       await this.testToken2.connect(this.addr5).approve(this.provisioner.address, 1000000000);
       await this.provisioner.connect(this.addr5).rent(30, this.addrMarketplace.address, this.marketplaceFee, await this.book.priceToken());
+      expect(await this.provisioner.hasAccess(this.addr5.address)).to.equal(true);
       var rental = await this.provisioner.renters(this.addr5.address);
       expect(rental.start).to.equal(rental.expiration.sub(30*day, this.addrMarketplace.address, this.marketplaceFee, await this.book.priceToken()));
+
       const originalRentalStart = rental.start;
       await this.provisioner.connect(this.addr5).rent(30, this.addrMarketplace.address, this.marketplaceFee, await this.book.priceToken());
       rental = await this.provisioner.renters(this.addr5.address);
@@ -451,6 +461,7 @@ for (const bookPrice of [15000000, 0, 1, 10]){
       // now, try letting the rental expire and ensuring the new rental is still the correct period
       await ethers.provider.send('evm_increaseTime', [100*day]);
       await ethers.provider.send('evm_mine');
+      expect(await this.provisioner.hasAccess(this.addr5.address)).to.equal(false);
       await this.provisioner.connect(this.addr5).rent(30, this.addrMarketplace.address, this.marketplaceFee, await this.book.priceToken());
       rental = await this.provisioner.renters(this.addr5.address);
       expect(rental.expiration).to.equal(rental.start.add(30*day, this.addrMarketplace.address, this.marketplaceFee, await this.book.priceToken()));

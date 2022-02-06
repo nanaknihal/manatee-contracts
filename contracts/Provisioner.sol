@@ -34,22 +34,39 @@ contract Provisioner is Initializable {
       buy(msg.sender, marketplaceAddr, marketplaceTip, marketplaceTipToken);
     }
 
-    //will charge the book's price plus token 'tip' to marketplace, overloaded to buy a book for someone/something else
-    // function buy(address recipient, address marketplaceAddr, uint256 marketplaceTip, address marketplaceTipToken) public {
-    //   _buy(recipient, marketplaceAddr, marketplaceTip, marketplaceTipToken);
-    // }
-
+    //will charge the book's price plus token 'tip' to marketplace, overloaded to be able to gift a book to custom recipient
     function buy(address recipient, address marketplaceAddr, uint256 marketplaceTip, address marketplaceTipToken) public {
       require(!owners[recipient], "recipient already owns a copy");
       require(_processPayment(book.price(), marketplaceAddr, marketplaceTip, marketplaceTipToken), "payment processing failed");
       owners[recipient] = true;
     }
 
+    function buyNoMarketplace() public {
+      buyNoMarketplace(msg.sender);
+    }
+
+    // cucstom recipient enables gifts
+    function buyNoMarketplace(address recipient) public {
+      require(!owners[recipient], "recipient already owns a copy");
+      require(_processPaymentNoMarketplace(book.price()), "payment processing failed");
+      owners[recipient] = true;
+    }
+
+
+
     function rent(uint256 numDays, address marketplaceAddr, uint256 marketplaceTip, address marketplaceTipToken) public {
       uint256 price = book.rentalPeriods(numDays);
       require(price > 0, "invalid rental period");
       require(!owners[msg.sender], "you already own the book you are trying to rent");
       require(_processPayment(price, marketplaceAddr, marketplaceTip, marketplaceTipToken), "payment processing failed");
+      _rentIndiscriminantly(msg.sender, numDays * 1 days);
+    }
+
+    function rentNoMarketplace(uint256 numDays) public {
+      uint256 price = book.rentalPeriods(numDays);
+      require(price > 0, "invalid rental period");
+      require(!owners[msg.sender], "you already own the book you are trying to rent");
+      require(_processPaymentNoMarketplace(price), "payment processing failed");
       _rentIndiscriminantly(msg.sender, numDays * 1 days);
     }
 
@@ -63,6 +80,18 @@ contract Provisioner is Initializable {
 
       return true;
 
+    }
+
+    function hasAccess(address addr) public view returns (bool) {
+      return (owners[addr] || (renters[addr].expiration > block.timestamp));
+    }
+
+    function _processPaymentNoMarketplace(uint256 price) private   returns (bool) {
+      IERC20 priceToken_ = IERC20(book.priceToken());
+      uint256 fee = price / 10; //book.price() / manateeToken.feeDivisor();
+      require(priceToken_.transferFrom(msg.sender, bookAddr, price - fee), "Need to pay enough for book");
+      require(priceToken_.transferFrom(msg.sender, manatAddr, fee), "Need to pay enough for book");
+      return true;
     }
 
 

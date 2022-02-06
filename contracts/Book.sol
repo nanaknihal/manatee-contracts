@@ -27,7 +27,7 @@ contract Book is Initializable, ERC20Dividends, OwnableUpgradeable { //PaymentSp
     string public category;
     string public description;
     string[] public versionHashes;
-    string public mostRecentVersion;
+    string public mostRecentVersion; //this variable is useless but an artifact that's not wise to delete for an already-existing proxy logic; any new variable here would override it (see https://blog.openzeppelin.com/proxy-patterns/)
 
     function initBook(address owner_, string memory name_, string memory symbol_, uint supply_, uint price_, address priceToken_, bool resaleEnabled_, string memory category_, string memory description_) public initializer {
       ERC20Dividends.initERC20Dividends(name_, symbol_, supply_, priceToken_, owner_);
