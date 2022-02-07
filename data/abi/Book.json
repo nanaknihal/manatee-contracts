@@ -17,7 +17,7 @@
   "function enableResale()",
   "function getVersionHashes() view returns (string[])",
   "function increaseAllowance(address,uint256) returns (bool)",
-  "function initBook(address,string,string,uint256,uint256,address,bool,string,string)",
+  "function initBook(tuple(address,string,string,uint256,uint256,address,bool,string,string,string,string))",
   "function initERC20Dividends(string,string,uint256,address,address) payable",
   "function mostRecentVersion() view returns (string)",
   "function name() view returns (string)",

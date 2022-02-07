@@ -26,13 +26,39 @@ const generateBook = async (manatAddr, fromAddr = null) => {
   const [owner, addr1, addr2] = await ethers.getSigners();
   if(testnetForked){
     const paymentToken = await generateTestDAI();
-    return await createBookProxy(owner.address, 'Name of a Book', 'BOOKSYMBOL', 1000000, 15000000, paymentToken.address, false, 'nonfiction', 'this book is a good bok who is about charicters which are friendly');
+    return await createBookProxy({
+      owner : owner.address,
+      name : 'Name of a Book',
+      symbol : 'BOOKSYMBOL',
+      supply : 1000000,
+      price : 15000000,
+      priceToken : paymentToken.address,
+      resaleEnabled : false,
+      category : 'nonfiction',
+      description : 'this book is a good bok who is about charicters which are friendly',
+      initialVersionHash : 'example_hash',
+      initialVersionURI : 'example_uri'
+    });
+
   } else {
     const Book = await ethers.getContractFactory('Book');
     const bookFrom = fromAddr ? Book.connect(fromAddr) : Book;
     //string memory name_, string memory symbol_, uint supply_, uint price_, address priceToken_, bool resaleEnabled_, address payable manatAddr
     const paymentToken = await generateTestDAI();
-    const book = await bookFrom.deploy(owner.address, 'Name of a Book', 'BOOKSYMBOL', 1000000, 15000000, paymentToken.address, false, 'nonfiction', 'this book is a good bok who is about charicters which are friendly');
+    const book = await bookFrom.deploy({
+      owner : owner.address,
+      name : 'Name of a Book',
+      symbol : 'BOOKSYMBOL',
+      supply : 1000000,
+      price : 15000000,
+      priceToken : paymentToken.address,
+      resaleEnabled : false,
+      category : 'nonfiction',
+      description : 'this book is a good bok who is about charicters which are friendly',
+      initialVersionHash : 'example_hash',
+      initialVersionURI : 'example_uri'
+    });
+
     await book.deployed();
     return book;
   }
@@ -95,7 +121,7 @@ const createProvisionerProxy = async (bookAddr) => {
   const [owner, addr1, addr2] = await ethers.getSigners();
   const Factory = await ethers.getContractFactory('BeaconProxyFactory');
   const Provisioner = await ethers.getContractFactory('Provisioner');
-  const fac = await Factory.attach('0x8F02dAC5E2FA7ee3f8B40A62e374093A120f90Ae');
+  const fac = await Factory.attach('0xb4aF5bdB5E4d5e0b079920A5C83082348DC529e5');
   const proxytx = await factory.createProvisionerBeaconProxy(bookAddr);
   const proxyrc = await proxytx.wait();
   const [proxyCreatorAddr, proxyAddr] = proxyrc.events.find(event => (event.event === 'ProvisionerProxyCreated' && event.args[0] === owner.address)).args;
@@ -106,7 +132,7 @@ const createBookProxy = async (...bookArgs) => {
   const [owner, addr1, addr2] = await ethers.getSigners();
   const Factory = await ethers.getContractFactory('BeaconProxyFactory');
   const Book = await ethers.getContractFactory('Book');
-  const fac = await Factory.attach('0x8F02dAC5E2FA7ee3f8B40A62e374093A120f90Ae');
+  const fac = await Factory.attach('0xb4aF5bdB5E4d5e0b079920A5C83082348DC529e5');
 
   const proxytx = await fac.createBookBeaconProxy(...bookArgs);
   const proxyrc = await proxytx.wait();

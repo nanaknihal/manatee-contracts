@@ -9,7 +9,7 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "contracts/Provisioner.sol";
 import "contracts/BeaconProxyFactory.sol";
 import "contracts/ERC20Dividends.sol";
-
+import "contracts/Arguments.sol";
 // import "contracts/PaymentSplitterOverrideShares.sol";
 // import "@openzeppelin/contracts/finance/PaymentSplitter.sol";
 
@@ -29,22 +29,24 @@ contract Book is Initializable, ERC20Dividends, OwnableUpgradeable { //PaymentSp
     string[] public versionHashes;
     string public mostRecentVersion; //this variable is useless but an artifact that's not wise to delete for an already-existing proxy logic; any new variable here would override it (see https://blog.openzeppelin.com/proxy-patterns/)
 
-    function initBook(address owner_, string memory name_, string memory symbol_, uint supply_, uint price_, address priceToken_, bool resaleEnabled_, string memory category_, string memory description_) public initializer {
-      ERC20Dividends.initERC20Dividends(name_, symbol_, supply_, priceToken_, owner_);
+
+    function initBook(Arguments.BookArgs memory a) public initializer {
+      ERC20Dividends.initERC20Dividends(a.name, a.symbol, a.supply, a.priceToken, a.owner);
       __Ownable_init();
 
-      _name = name_;
-      price = price_;
-      require((priceToken_ == 0x35935060E9160a8815312a2c2586109e8C10AD86) || (priceToken_ == 0x07018e3CF542Ac3A97A9b3187DF161450B4E5986), "only USDC and DAI are allowed in V1");
-      priceToken = priceToken_;
-      resaleEnabled = resaleEnabled_;
-      category = category_;
-      description = description_;
+      _name = a.name;
+      price = a.price;
+      require((a.priceToken == 0x35935060E9160a8815312a2c2586109e8C10AD86) || (a.priceToken == 0x07018e3CF542Ac3A97A9b3187DF161450B4E5986), "only USDC and DAI are allowed in V1");
+      priceToken = a.priceToken;
+      resaleEnabled = a.resaleEnabled;
+      category = a.category;
+      description = a.description;
+      setVersion(a.initialVersionHash, a.initialVersionURI);
       // provisioner = Provisioner(payable(0x6A78dF871291627C5470F7a768745C3ff05741F2));
       // provisioner = new Provisioner(payable(address(this)));
       // create provisioner for this book address from the factory
-      provisioner = Provisioner(BeaconProxyFactory(0x8F02dAC5E2FA7ee3f8B40A62e374093A120f90Ae).createProvisionerBeaconProxy(address(this)));
-      _transferOwnership(owner_);
+      provisioner = Provisioner(BeaconProxyFactory(0xeacBbB575b0D701D05f508C5E45377DE21B5235c).createProvisionerBeaconProxy(address(this)));
+      _transferOwnership(a.owner);
       //throw;//('please test addRentalPeriod and removeRentalPeriod');
     }
 

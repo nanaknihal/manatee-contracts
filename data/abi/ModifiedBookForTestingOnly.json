@@ -12,7 +12,7 @@
   "function decimals() view returns (uint8)",
   "function decreaseAllowance(address,uint256) returns (bool)",
   "function increaseAllowance(address,uint256) returns (bool)",
-  "function initBook(address,string,string,uint256,uint256,address,bool,string,string)",
+  "function initBook(tuple(address,string,string,uint256,uint256,address,bool,string,string,string,string))",
   "function initERC20Dividends(string,string,uint256,address,address) payable",
   "function name() view returns (string)",
   "function owner() view returns (address)",
