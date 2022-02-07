@@ -10,7 +10,7 @@ This is a hardhat environment but many of the files are gitignored and you'll ha
 ### Sample Provisioner (not made with factory)
 0xc779dF3f2140351EfaE3796179CA76e5e16b9C5B
 ### Contract Factory
-0xeacBbB575b0D701D05f508C5E45377DE21B5235c
+0xb4aF5bdB5E4d5e0b079920A5C83082348DC529e5
 ### Weird Test Token
 0x9996f37F7DdceCD703c3e35c9dd70cB18DB3CE29
 ### Weird Test Token 2
